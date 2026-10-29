@@ -17,6 +17,19 @@ enum Role {
   ADMIN
 }
 
+enum BookingStatus {
+  PENDING
+  APPROVED
+  MODIFIED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
 model User {
   id              String   @id @default(uuid()) @db.Uuid
   oauthProviderId String   @unique
@@ -28,5 +41,152 @@ model User {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  bookings  Booking[]
+  favorites Favorite[]
+  reviews   Review[]
+
   @@map("users")
+}
+
+model Accommodation {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  city        String
+  tagline     String?
+  description String
+  address     String
+  latitude    Decimal  @db.Decimal(9, 6)
+  longitude   Decimal  @db.Decimal(9, 6)
+  starRating  Int
+  facilities  String[]
+  policies    String
+  phoneNumber String?
+  email       String?
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rooms     Room[]
+  images    AccommodationImage[]
+  favorites Favorite[]
+  reviews   Review[]
+
+  @@index([city])
+  @@map("accommodations")
+}
+
+model Room {
+  id              String   @id @default(uuid()) @db.Uuid
+  accommodationId String   @db.Uuid
+  roomNumber      String
+  roomType        String
+  description     String?
+  capacity        Int
+  pricePerNight   Decimal  @db.Decimal(10, 2)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  accommodation Accommodation @relation(fields: [accommodationId], references: [id], onDelete: Restrict)
+
+  bookingRooms BookingRoom[]
+
+  @@unique([accommodationId, roomNumber])
+  @@map("rooms")
+}
+
+model AccommodationImage {
+  id              String  @id @default(uuid()) @db.Uuid
+  accommodationId String  @db.Uuid
+  imageUrl        String
+  altText         String?
+  sortOrder       Int     @default(0)
+
+  accommodation Accommodation @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
+
+  @@index([accommodationId])
+  @@map("accommodation_images")
+}
+
+model Booking {
+  id             String        @id @default(uuid()) @db.Uuid
+  userId         String        @db.Uuid
+  checkInDate    DateTime      @db.Date
+  checkOutDate   DateTime      @db.Date
+  numberOfGuests Int
+  totalPrice     Decimal       @db.Decimal(10, 2)
+  status         BookingStatus @default(PENDING)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  bookingRooms BookingRoom[]
+  payments     Payment[]
+
+  @@index([userId])
+  @@map("bookings")
+}
+
+model BookingRoom {
+  id            String  @id @default(uuid()) @db.Uuid
+  bookingId     String  @db.Uuid
+  roomId        String  @db.Uuid
+  pricePerNight Decimal @db.Decimal(10, 2)
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  room    Room    @relation(fields: [roomId], references: [id], onDelete: Restrict)
+
+  @@unique([bookingId, roomId])
+  @@index([roomId])
+  @@map("booking_rooms")
+}
+
+model Favorite {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @db.Uuid
+  accommodationId String   @db.Uuid
+  createdAt       DateTime @default(now())
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accommodation Accommodation @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, accommodationId])
+  @@index([accommodationId])
+  @@map("favorites")
+}
+
+model Review {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @db.Uuid
+  accommodationId String   @db.Uuid
+  rating          Int
+  comment         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  accommodation Accommodation @relation(fields: [accommodationId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, accommodationId])
+  @@index([accommodationId])
+  @@map("reviews")
+}
+
+model Payment {
+  id                String        @id @default(uuid()) @db.Uuid
+  bookingId         String        @db.Uuid
+  amount            Decimal       @db.Decimal(10, 2)
+  currency          String        @default("ZAR") @db.Char(3)
+  status            PaymentStatus @default(PENDING)
+  provider          String
+  providerReference String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  paidAt            DateTime?
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+
+  @@unique([provider, providerReference])
+  @@index([bookingId])
+  @@map("payments")
 }
