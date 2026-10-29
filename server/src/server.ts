@@ -7,5 +7,5 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
 }
 
 app.listen(port, () => {
-  console.log(`PRISMA API: http://localhost:${port}`);
+  console.log(`HALDEN API: http://localhost:${port}`);
 });
