@@ -1,4 +1,3 @@
-//prisma/seed.ts
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client.js";
@@ -22,8 +21,59 @@ const prisma = new PrismaClient({
   },
 });
 
-// Fixed IDs prevent duplicate seed records when this script is rerun.
-const accommodationId = "10000000-0000-4000-8000-000000000001";
+// Fixed IDs prevent duplicate records when the seed is rerun.
+// Johannesburg and Winelands details include demonstration locations.
+// Shared facilities, star ratings and room prices are development data.
+const accommodations = [
+  {
+    id: "10000000-0000-4000-8000-000000000001",
+    name: "Halden Cape Town",
+    city: "Cape Town",
+    tagline: "Between mountain and ocean",
+    description:
+      "A quiet retreat with sea-facing suites, a rooftop pool and long slow breakfasts.",
+    address: "12 Kloof Nek Road, Cape Town",
+    latitude: "-33.934000",
+    longitude: "18.405000",
+    email: "capetown@halden.example",
+    imageUrl: "/images/cape-town.jpg",
+    imageAlt: "Hotel terrace overlooking Table Mountain",
+    firstImageId: "20000000-0000-4000-8000-000000000001",
+    roomImageId: "20000000-0000-4000-8000-000000000002",
+  },
+  {
+    id: "10000000-0000-4000-8000-000000000002",
+    name: "Halden Johannesburg",
+    city: "Johannesburg",
+    tagline: "Calm in the heart of the city",
+    description:
+      "A peaceful city retreat with leafy gardens, comfortable rooms and a welcoming library bar.",
+    address: "Parkhurst, Johannesburg — demonstration location",
+    latitude: "-26.140000",
+    longitude: "28.020000",
+    email: "johannesburg@halden.example",
+    imageUrl: "/images/johannesburg.jpg",
+    imageAlt: "Halden Johannesburg lounge and library bar",
+    firstImageId: "20000000-0000-4000-8000-000000000003",
+    roomImageId: "20000000-0000-4000-8000-000000000004",
+  },
+  {
+    id: "10000000-0000-4000-8000-000000000003",
+    name: "Halden Winelands",
+    city: "Franschhoek",
+    tagline: "Vineyards at your door",
+    description:
+      "A restored farmhouse among the vines, offering mountain views and a relaxed countryside stay.",
+    address: "Franschhoek, Western Cape — demonstration location",
+    latitude: "-33.910000",
+    longitude: "19.120000",
+    email: "winelands@halden.example",
+    imageUrl: "/images/winelands.jpg",
+    imageAlt: "White farmhouse surrounded by vineyards and mountains",
+    firstImageId: "20000000-0000-4000-8000-000000000005",
+    roomImageId: "20000000-0000-4000-8000-000000000006",
+  },
+];
 
 async function main() {
   console.log("Connecting to the database...");
@@ -33,99 +83,102 @@ async function main() {
   console.log("Database connected. Starting seed transaction...");
 
   await prisma.$transaction(async (tx) => {
-    const accommodationData = {
-      name: "Halden Cape Town",
-      city: "Cape Town",
-      tagline: "Between mountain and ocean",
-      description:
-        "A quiet retreat with sea-facing suites, a rooftop pool and long slow breakfasts.",
-      address: "12 Kloof Nek Road, Cape Town",
-      latitude: "-33.934000",
-      longitude: "18.405000",
-      starRating: 5,
-      facilities: [
-        "Free Wi-Fi",
-        "Pool",
-        "Restaurant",
-        "Spa",
-        "Parking",
-        "Airport shuttle",
-      ],
-      policies: "Check-in from 14:00. Check-out by 11:00. No smoking.",
-      email: "capetown@halden.example",
-      isPublished: true,
-    };
+    for (const hotel of accommodations) {
+      const accommodationData = {
+        name: hotel.name,
+        city: hotel.city,
+        tagline: hotel.tagline,
+        description: hotel.description,
+        address: hotel.address,
+        latitude: hotel.latitude,
+        longitude: hotel.longitude,
+        starRating: 5,
+        facilities: [
+          "Free Wi-Fi",
+          "Pool",
+          "Restaurant",
+          "Spa",
+          "Parking",
+          "Airport shuttle",
+        ],
+        policies: "Check-in from 14:00. Check-out by 11:00. No smoking.",
+        email: hotel.email,
+        isPublished: true,
+      };
 
-    await tx.accommodation.upsert({
-      where: {
-        id: accommodationId,
-      },
-      update: accommodationData,
-      create: {
-        id: accommodationId,
-        ...accommodationData,
-      },
-    });
-
-    const images = [
-      {
-        id: "20000000-0000-4000-8000-000000000001",
-        imageUrl: "/images/cape-town.jpg",
-        altText: "Hotel terrace overlooking Table Mountain",
-        sortOrder: 0,
-      },
-      {
-        id: "20000000-0000-4000-8000-000000000002",
-        imageUrl: "/images/room.jpg",
-        altText: "Halden guest room",
-        sortOrder: 1,
-      },
-    ];
-
-    for (const image of images) {
-      const { id, ...imageData } = image;
-
-      await tx.accommodationImage.upsert({
+      await tx.accommodation.upsert({
         where: {
-          id,
+          id: hotel.id,
         },
-        update: {
-          ...imageData,
-          accommodationId,
-        },
+        update: accommodationData,
         create: {
-          id,
-          ...imageData,
-          accommodationId,
+          id: hotel.id,
+          ...accommodationData,
+        },
+      });
+
+      const images = [
+        {
+          id: hotel.firstImageId,
+          imageUrl: hotel.imageUrl,
+          altText: hotel.imageAlt,
+          sortOrder: 0,
+        },
+        {
+          id: hotel.roomImageId,
+          imageUrl: "/images/room.jpg",
+          altText: `${hotel.name} guest room`,
+          sortOrder: 1,
+        },
+      ];
+
+      for (const image of images) {
+        const { id, ...imageData } = image;
+
+        await tx.accommodationImage.upsert({
+          where: {
+            id,
+          },
+          update: {
+            ...imageData,
+            accommodationId: hotel.id,
+          },
+          create: {
+            id,
+            ...imageData,
+            accommodationId: hotel.id,
+          },
+        });
+      }
+
+      const roomData = {
+        roomType: "Classic Room",
+        description: "Queen bed, garden or city view, rain shower.",
+        capacity: 2,
+        pricePerNight: "2400.00",
+        isActive: true,
+      };
+
+      await tx.room.upsert({
+        where: {
+          accommodationId_roomNumber: {
+            accommodationId: hotel.id,
+            roomNumber: "101",
+          },
+        },
+        update: roomData,
+        create: {
+          accommodationId: hotel.id,
+          roomNumber: "101",
+          ...roomData,
         },
       });
     }
-
-    const roomData = {
-      roomType: "Classic Room",
-      description: "Queen bed, garden or city view, rain shower.",
-      capacity: 2,
-      pricePerNight: "2400.00",
-      isActive: true,
-    };
-
-    await tx.room.upsert({
-      where: {
-        accommodationId_roomNumber: {
-          accommodationId,
-          roomNumber: "101",
-        },
-      },
-      update: roomData,
-      create: {
-        accommodationId,
-        roomNumber: "101",
-        ...roomData,
-      },
-    });
   });
 
-  console.log("Seed complete: Cape Town hotel, 2 images and room 101.");
+  console.log(
+    "Seed complete: 3 Halden hotels, 6 images and 3 Classic rooms.",
+  );
 }
 
 main()
