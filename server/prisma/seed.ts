@@ -27,7 +27,7 @@ const prisma = new PrismaClient({
 const accommodations = [
   {
     id: "10000000-0000-4000-8000-000000000001",
-    name: "Halden Cape Town",
+    name: "Black Clover Cape Town",
     city: "Cape Town",
     tagline: "Between mountain and ocean",
     description:
@@ -43,7 +43,7 @@ const accommodations = [
   },
   {
     id: "10000000-0000-4000-8000-000000000002",
-    name: "Halden Johannesburg",
+    name: "Black Clover Johannesburg",
     city: "Johannesburg",
     tagline: "Calm in the heart of the city",
     description:
@@ -53,13 +53,13 @@ const accommodations = [
     longitude: "28.020000",
     email: "johannesburg@halden.example",
     imageUrl: "/images/johannesburg.jpg",
-    imageAlt: "Halden Johannesburg lounge and library bar",
+    imageAlt: "Black Clover Johannesburg lounge and library bar",
     firstImageId: "20000000-0000-4000-8000-000000000003",
     roomImageId: "20000000-0000-4000-8000-000000000004",
   },
   {
     id: "10000000-0000-4000-8000-000000000003",
-    name: "Halden Winelands",
+    name: "Black Clover Winelands",
     city: "Franschhoek",
     tagline: "Vineyards at your door",
     description:
@@ -177,7 +177,7 @@ async function main() {
   });
 
   console.log(
-    "Seed complete: 3 Halden hotels, 6 images and 3 Classic rooms.",
+    "Seed complete: 3 Black Clover hotels, 6 images and 3 Classic rooms.",
   );
 }
 
