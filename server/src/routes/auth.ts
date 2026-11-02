@@ -3,6 +3,7 @@ import {
   type ErrorRequestHandler,
 } from "express";
 import passport from "../config/passport.js";
+import { requireAuth, requireAdmin } from "../middleware/auth.js";
 
 const authRouter = Router();
 
@@ -30,8 +31,8 @@ authRouter.get("/failure", (_req, res) => {
   });
 });
 
-authRouter.get("/me", (req, res) => {
-  if (!req.isAuthenticated()) {
+authRouter.get("/me", requireAuth, (req, res) => {
+  if (!req.user) {
     res.status(401).json({
       success: false,
       message: "You are not signed in",
@@ -51,7 +52,7 @@ authRouter.get("/me", (req, res) => {
   });
 });
 
-authRouter.post("/logout", (req, res, next) => {
+authRouter.post("/logout", requireAuth, (req, res, next) => {
   req.logout((logoutError) => {
     if (logoutError) {
       next(logoutError);
@@ -85,6 +86,13 @@ const handleAuthError: ErrorRequestHandler = (
     message: "Unable to complete authentication",
   });
 };
+
+authRouter.get("/admin-check", requireAdmin, (_req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Administrator access granted",
+  });
+});
 
 authRouter.use(handleAuthError);
 
