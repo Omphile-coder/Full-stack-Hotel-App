@@ -5,6 +5,7 @@ import prisma from "./config/prisma.js";
 import sessionMiddleware from "./config/session.js";
 import passport from "./config/passport.js";
 import authRouter from "./routes/auth.js";
+import accommodationsRouter from "./routes/accommodations.js";
 
 const app = express();
 
@@ -24,6 +25,8 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/accommodations", accommodationsRouter);
+
 
 app.get("/api/v1/health", (_req, res) => {
   res.status(200).json({
