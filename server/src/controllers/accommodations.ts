@@ -1,9 +1,12 @@
+import { ApiError, page } from "../api.js";
 import type { RequestHandler } from "express";
 import type { Request, Response } from "express";
 import {
   listPublishedAccommodations,
   findPublishedAccommodationById,
 } from "../services/accommodations.js";
+
+
 
 
 export async function getAccommodationById(
@@ -131,8 +134,22 @@ export const getAccommodations: RequestHandler = async (
     return;
   }
 
+  const numericFilter = (name: string, max: number) => {
+    const value = req.query[name];
+    if (value === undefined) return undefined;
+    if (typeof value !== "string" || !/^[1-9]\d*$/.test(value) || Number(value) > max) {
+      throw new ApiError(400, name + " must be an integer from 1 to " + max);
+    }
+    return Number(value);
+  };
+  const minStars = numericFilter("minStars", 5);
+  const minCapacity = numericFilter("minCapacity", 1000);
+  const offset = page(req.query).skip;
   try {
     const accommodations = await listPublishedAccommodations({
+      minStars,
+      minCapacity,
+      offset,
       ...(location ? { location } : {}),
       ...(minPrice !== undefined ? { minPrice } : {}),
       ...(maxPrice !== undefined ? { maxPrice } : {}),

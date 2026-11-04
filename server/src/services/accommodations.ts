@@ -5,6 +5,9 @@ export interface AccommodationFilters {
   location?: string;
   minPrice?: string;
   maxPrice?: string;
+  minStars?: number;
+  minCapacity?: number;
+  offset?: number;
 }
 
 export async function findPublishedAccommodationById(id: string) {
@@ -101,6 +104,9 @@ export async function listPublishedAccommodations(
     isPublished: true,
   };
 
+  if (filters.minStars !== undefined) {
+    where.starRating = { gte: filters.minStars };
+  }
   if (filters.location) {
     where.city = {
       contains: filters.location,
@@ -127,6 +133,11 @@ if (hasPriceFilter) {
       : {}),
   };
 
+}
+if (filters.minCapacity !== undefined) {
+  roomWhere.capacity = { gte: filters.minCapacity };
+}
+if (hasPriceFilter || filters.minCapacity !== undefined) {
   where.rooms = {
     some: roomWhere,
   };
@@ -138,6 +149,7 @@ if (hasPriceFilter) {
       { name: "asc" },
       { id: "asc" },
     ],
+    skip: filters.offset ?? 0,
     take: 20,
     select: {
       id: true,

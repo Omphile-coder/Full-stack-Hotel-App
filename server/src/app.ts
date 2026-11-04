@@ -7,6 +7,12 @@ import passport from "./config/passport.js";
 import authRouter from "./routes/auth.js";
 import accommodationsRouter from "./routes/accommodations.js";
 
+import { ApiError, apiErrors } from "./api.js";
+import { account } from "./routes/account.js";
+import { bookings } from "./routes/bookings.js";
+import { inventory } from "./routes/inventory.js";
+import { payments, stripeWebhook } from "./routes/payments.js";
+
 const app = express();
 
 app.use(
@@ -16,7 +22,17 @@ app.use(
   }),
 );
 
+app.use("/api/v1/payments/stripe/webhook", stripeWebhook);
 app.use(express.json());
+
+app.use((req, _res, next) => {
+  const origin = req.get("origin");
+  const clientOrigin = new URL(process.env.CLIENT_URL ?? "http://localhost:5173").origin;
+  if (!["GET", "HEAD", "OPTIONS"].includes(req.method) && origin && origin !== clientOrigin) {
+    return next(new ApiError(403, "Untrusted request origin"));
+  }
+  next();
+});
 
 // Load sessions before routes that use req.session.
 app.use(sessionMiddleware);
@@ -26,6 +42,7 @@ app.use(passport.session());
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/accommodations", accommodationsRouter);
+app.use("/api/v1", inventory, bookings, account, payments);
 
 
 app.get("/api/v1/health", (_req, res) => {
@@ -73,5 +90,8 @@ if (process.env.NODE_ENV !== "production") {
     });
   });
 }
+
+app.use((_req, _res, next) => next(new ApiError(404, "Endpoint not found")));
+app.use(apiErrors);
 
 export default app;
