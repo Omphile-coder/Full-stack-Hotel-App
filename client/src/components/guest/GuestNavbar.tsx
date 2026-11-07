@@ -79,7 +79,10 @@ export function GuestNavbar({
             <Bell className="nav-icon" aria-hidden="true" />
             Notifications
           </NavLink>
-          <NavLink to={user ? "/profile" : "/signin"}>
+          <NavLink
+            to={user ? "/profile" : "/signin"}
+            className={user ? undefined : "nav-sign-in"}
+          >
             {user ? (
               <UserRound className="nav-icon" aria-hidden="true" />
             ) : (
