@@ -17,8 +17,14 @@ export function PaymentCallback() {
   const data = state.originalArgs === reference ? state.data : undefined;
   const error = state.originalArgs === reference ? state.error : undefined;
   if (data?.status === 'COMPLETED') return <Navigate to={'/bookings/' + data.bookingId} replace />;
+  let title = 'Checking your payment.';
+  if (!reference) title = 'Payment reference missing.';
+  else if (error) title = 'We could not check your payment.';
+  else if (data?.status === 'PENDING') title = 'Payment is awaiting confirmation.';
+  else if (data?.status === 'FAILED') title = 'Payment was not completed.';
+
   return <main className="section form-page" id="main" tabIndex={-1}>
-    <Heading eyebrow="YOUR PAYMENT">{data?.status === 'FAILED' ? 'Payment was not completed.' : 'Checking your payment.'}</Heading>
+    <Heading eyebrow="YOUR PAYMENT">{title}</Heading>
     {!reference ? <p className="notice error" role="alert">No payment reference was provided. Open your reservation to check its status.</p> : <>
       <Feedback loading={state.isLoading} error={error} />
       {data?.status === 'PENDING' && <p className="notice">Payment has not been confirmed yet. You can check again or return to your reservation.</p>}
