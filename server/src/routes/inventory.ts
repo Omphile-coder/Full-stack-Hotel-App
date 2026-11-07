@@ -2,6 +2,7 @@ import { Router } from "express";
 import prisma from "../config/prisma.js";
 import { requireAdmin } from "../middleware/auth.js";
 import { ApiError, bool, integer, object, page, send, string, uuid } from "../api.js";
+import { bookingDetails } from "./bookings.js";
 
 function accommodationInput(value: unknown, partial: boolean) {
   const body = object(value);
@@ -54,6 +55,29 @@ function images(value: unknown) {
 }
 
 export const inventory = Router();
+// Dashboard totals are calculated across the database rather than a paginated UI list.
+inventory.get("/admin/summary", requireAdmin, async (_req, res) => {
+  const [hotels, publishedHotels, activeRooms, reservations, completedPayments, recentBookings, unpaidReservations] =
+    await prisma.$transaction([
+      prisma.accommodation.count(),
+      prisma.accommodation.count({ where: { isPublished: true } }),
+      prisma.room.count({ where: { isActive: true } }),
+      prisma.booking.groupBy({ by: ["status"], _count: { _all: true } }),
+      prisma.payment.aggregate({ where: { status: "COMPLETED", currency: "ZAR" }, _sum: { amount: true } }),
+      prisma.booking.findMany({
+        take: 5, orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        include: { ...bookingDetails, user: { select: { id: true, name: true, email: true } } },
+      }),
+      prisma.booking.count({ where: { status: { not: "CANCELLED" }, payments: { none: { status: "COMPLETED" } } } }),
+    ], { isolationLevel: "RepeatableRead" });
+  send(res, {
+    hotels, publishedHotels, activeRooms,
+    reservations: reservations.reduce((sum, item) => sum + item._count._all, 0),
+    pendingReservations: unpaidReservations,
+    receivedPayments: completedPayments._sum.amount?.toFixed(2) ?? "0.00",
+    recentBookings,
+  });
+});
 inventory.get("/admin/accommodations", requireAdmin, async (req, res) => {
   send(res, await prisma.accommodation.findMany({ ...page(req.query), orderBy: { id: "asc" } }));
 });
