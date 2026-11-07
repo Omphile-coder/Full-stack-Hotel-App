@@ -9,6 +9,17 @@ const authRouter = Router();
 
 authRouter.get(
   "/google",
+  // Remember only local frontend paths before redirecting to the Google provider.
+  (req, _res, next) => {
+    const returnTo = req.query.returnTo;
+    if (typeof returnTo === "string" && returnTo.startsWith("/") &&
+        !returnTo.startsWith("//") && !/[\\\r\n]/.test(returnTo) && returnTo.length <= 2000) {
+      req.session.frontendReturnTo = returnTo;
+    } else {
+      delete req.session.frontendReturnTo;
+    }
+    next();
+  },
   passport.authenticate("google", {
     scope: ["profile", "email"],
   }),
@@ -18,13 +29,27 @@ authRouter.get(
   "/google/callback",
   passport.authenticate("google", {
     failureRedirect: "/api/v1/auth/failure",
+    keepSessionInfo: true,
   }),
-  (_req, res) => {
+  (req, res) => {
+    const returnTo = req.session.frontendReturnTo;
+    delete req.session.frontendReturnTo;
+    if (returnTo) {
+      const client = new URL(process.env.CLIENT_URL ?? "http://localhost:5173");
+      res.redirect(client.origin + returnTo);
+      return;
+    }
     res.redirect("/api/v1/auth/me");
   },
 );
 
-authRouter.get("/failure", (_req, res) => {
+authRouter.get("/failure", (req, res) => {
+  if (req.session.frontendReturnTo) {
+    delete req.session.frontendReturnTo;
+    const client = new URL(process.env.CLIENT_URL ?? "http://localhost:5173");
+    res.redirect(client.origin + "/signin?error=google");
+    return;
+  }
   res.status(401).json({
     success: false,
     message: "Google sign-in was unsuccessful",
