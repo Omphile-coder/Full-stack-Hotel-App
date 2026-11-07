@@ -1,6 +1,6 @@
 import goldClover from '../../assets/gold-clover.png';
 import { Bell, Building2, CalendarDays, Heart, LayoutDashboard, LogIn, LogOut, Menu, UserRound, X } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link,NavLink } from 'react-router-dom';
 import { useSession } from '../../hooks/useSession';
 import { useSignOut } from '../../hooks/useSignOut';
@@ -16,16 +16,24 @@ export function GuestNavbar({
   const { user } = useSession();
   const { signOut, error, isLoading } = useSignOut();
   const [open, setOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
   return (
     <>
       <header
         className={"navigation guest-navigation " + (hero ? "on-hero" : "")}
+        onKeyDown={(event) => {
+          if (event.key !== 'Escape' || !open) return;
+          event.preventDefault();
+          setOpen(false);
+          menuButton.current?.focus();
+        }}
       >
         <Link className="wordmark guest-wordmark" to="/">
           <img src={goldClover} alt="" width={128} height={128} />
           Black Clover
         </Link>
         <button
+          ref={menuButton}
           className="menu-toggle"
           aria-expanded={open}
           aria-controls="guest-menu"
