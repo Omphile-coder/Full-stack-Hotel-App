@@ -81,7 +81,7 @@ export function GuestNavbar({
           </NavLink>
           <NavLink
             to={user ? "/profile" : "/signin"}
-            className={user ? undefined : "nav-sign-in"}
+            className={user ? undefined : "nav-session-action"}
           >
             {user ? (
               <UserRound className="nav-icon" aria-hidden="true" />
@@ -97,7 +97,7 @@ export function GuestNavbar({
             </NavLink>
           )}
           {user && (
-            <button disabled={isLoading} onClick={signOut}>
+            <button className="nav-session-action" disabled={isLoading} onClick={signOut}>
               <LogOut className="nav-icon" aria-hidden="true" />
               Sign out
             </button>

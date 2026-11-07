@@ -932,15 +932,15 @@ dialog::backdrop {
   flex: initial;
   white-space: nowrap;
 }
-.guest-navigation nav .nav-sign-in {
+.guest-navigation nav .nav-session-action {
   min-height: 44px;
   padding: 10px 14px;
   border-radius: 8px;
   background-color: #ABBDC7;
   transition: background-color 150ms ease;
 }
-.guest-navigation nav .nav-sign-in:hover,
-.guest-navigation nav .nav-sign-in:focus-visible {
+.guest-navigation nav .nav-session-action:hover,
+.guest-navigation nav .nav-session-action:focus-visible {
   background-color: #97aeb9;
 }
 .guest-navigation .nav-icon {
