@@ -162,8 +162,7 @@ main:focus {
   color: white;
 }
 .on-hero {
-  --landing-nav-background: #FAF7EF;
-  color: #BA8E4E;
+  --landing-nav-background: #faf7ef;
   position: relative;
   z-index: 1;
   background: var(--landing-nav-background);
@@ -919,6 +918,7 @@ dialog::backdrop {
 .guest-navigation {
   align-items: center;
   position: relative;
+  color: var(--ink);
 }
 .guest-navigation nav {
   width: auto;
@@ -1301,13 +1301,11 @@ dialog::backdrop {
     z-index: 20;
     padding: 20px;
     background: var(--paper);
-    color: var(--ink);
     border: 1px solid var(--border);
     box-shadow: 0 12px 30px rgb(0 0 0 / 12%);
   }
   .guest-navigation.on-hero nav {
     background: var(--landing-nav-background);
-    color: inherit;
   }
   .guest-navigation nav.expanded {
     display: flex;
