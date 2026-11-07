@@ -1,7 +1,4 @@
-import {
-  Router,
-  type ErrorRequestHandler,
-} from "express";
+import { Router, type ErrorRequestHandler } from "express";
 import passport from "../config/passport.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
 
@@ -12,8 +9,13 @@ authRouter.get(
   // Remember only local frontend paths before redirecting to the Google provider.
   (req, _res, next) => {
     const returnTo = req.query.returnTo;
-    if (typeof returnTo === "string" && returnTo.startsWith("/") &&
-        !returnTo.startsWith("//") && !/[\\\r\n]/.test(returnTo) && returnTo.length <= 2000) {
+    if (
+      typeof returnTo === "string" &&
+      returnTo.startsWith("/") &&
+      !returnTo.startsWith("//") &&
+      !/[\\\r\n]/.test(returnTo) &&
+      returnTo.length <= 2000
+    ) {
       req.session.frontendReturnTo = returnTo;
     } else {
       delete req.session.frontendReturnTo;
@@ -98,12 +100,7 @@ authRouter.post("/logout", requireAuth, (req, res, next) => {
   });
 });
 
-const handleAuthError: ErrorRequestHandler = (
-  _error,
-  _req,
-  res,
-  _next,
-) => {
+const handleAuthError: ErrorRequestHandler = (_error, _req, res, _next) => {
   console.error("Authentication request failed");
 
   res.status(500).json({

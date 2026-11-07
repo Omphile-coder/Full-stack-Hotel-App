@@ -1,5 +1,5 @@
-import { createContext } from 'react';
-import type { User } from '../lib/types';
+import { createContext } from "react";
+import type { User } from "../lib/types";
 
 export interface Confirmation {
   title: string;
@@ -21,4 +21,3 @@ export interface AppSession {
 
 /** Session data is derived from the Redux API cache, with transient UI actions alongside it. */
 export const SessionContext = createContext<AppSession | null>(null);
-

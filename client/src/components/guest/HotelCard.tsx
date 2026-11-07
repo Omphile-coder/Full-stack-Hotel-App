@@ -1,8 +1,8 @@
-import { ArrowRight } from 'lucide-react';
-import type { PropsWithChildren } from 'react';
-import { Link } from 'react-router-dom';
-import { hotelPhoto,money } from '../../lib/format';
-import type { Hotel } from '../../lib/types';
+import { ArrowRight } from "lucide-react";
+import type { PropsWithChildren } from "react";
+import { Link } from "react-router-dom";
+import { hotelPhoto, money } from "../../lib/format";
+import type { Hotel } from "../../lib/types";
 
 /** Real hotel data is displayed using the same card geometry as the Figma location cards. */
 export function HotelCard({
@@ -35,7 +35,14 @@ export function HotelCard({
       )}
       {children}
       <Link className={home ? "explore-link" : "button outline"} to={href}>
-        {home ? <>Explore location <ArrowRight className="ui-icon" aria-hidden="true" /></> : "View hotel"}
+        {home ? (
+          <>
+            Explore location{" "}
+            <ArrowRight className="ui-icon" aria-hidden="true" />
+          </>
+        ) : (
+          "View hotel"
+        )}
       </Link>
     </article>
   );

@@ -1,8 +1,6 @@
 import type { Request, Response } from "express";
 
-import {
-  findPublishedAccommodationById,
-} from "../services/accommodations.js";
+import { findPublishedAccommodationById } from "../services/accommodations.js";
 
 import {
   listActiveRoomsByAccommodationId,
@@ -10,7 +8,6 @@ import {
 } from "../services/rooms.js";
 
 import { Prisma } from "../generated/prisma/client.js";
-
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -31,8 +28,7 @@ export const getRoomsByAccommodation = async (
   }
 
   try {
-    const accommodation =
-      await findPublishedAccommodationById(id);
+    const accommodation = await findPublishedAccommodationById(id);
 
     if (!accommodation) {
       res.status(404).json({
@@ -119,8 +115,7 @@ export const createRoom = async (
   if (
     description !== undefined &&
     description !== null &&
-    (typeof description !== "string" ||
-      description.trim().length > 2000)
+    (typeof description !== "string" || description.trim().length > 2000)
   ) {
     res.status(400).json({
       success: false,
@@ -169,9 +164,7 @@ export const createRoom = async (
       roomNumber: roomNumber.trim(),
       roomType: roomType.trim(),
       description:
-        typeof description === "string"
-          ? description.trim() || null
-          : null,
+        typeof description === "string" ? description.trim() || null : null,
       capacity,
       pricePerNight,
       isActive: typeof isActive === "boolean" ? isActive : true,

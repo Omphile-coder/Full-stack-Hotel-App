@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom";
 
 /** Render the common footer using the green and cream brand colours. */
 export function GuestFooter() {
@@ -12,5 +12,3 @@ export function GuestFooter() {
     </footer>
   );
 }
-
-

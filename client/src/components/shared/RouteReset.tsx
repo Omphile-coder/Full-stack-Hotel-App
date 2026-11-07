@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 /** Restore scroll and focus on page navigation so keyboard users follow the route change. */
 export function RouteReset() {

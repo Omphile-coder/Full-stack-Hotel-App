@@ -6,9 +6,6 @@ import {
   findPublishedAccommodationById,
 } from "../services/accommodations.js";
 
-
-
-
 export async function getAccommodationById(
   req: Request<{ id: string }>,
   res: Response,
@@ -27,8 +24,7 @@ export async function getAccommodationById(
   }
 
   try {
-    const accommodation =
-      await findPublishedAccommodationById(id);
+    const accommodation = await findPublishedAccommodationById(id);
 
     if (!accommodation) {
       res.status(404).json({
@@ -43,10 +39,7 @@ export async function getAccommodationById(
       data: accommodation,
     });
   } catch (error) {
-    console.error(
-      "Failed to retrieve accommodation:",
-      error,
-    );
+    console.error("Failed to retrieve accommodation:", error);
 
     res.status(500).json({
       success: false,
@@ -55,10 +48,7 @@ export async function getAccommodationById(
   }
 }
 
-export const getAccommodations: RequestHandler = async (
-  req,
-  res,
-) => {
+export const getAccommodations: RequestHandler = async (req, res) => {
   const {
     location: rawLocation,
     minPrice: rawMinPrice,
@@ -82,19 +72,13 @@ export const getAccommodations: RequestHandler = async (
   }
 
   const location =
-    typeof rawLocation === "string"
-      ? rawLocation.trim()
-      : undefined;
+    typeof rawLocation === "string" ? rawLocation.trim() : undefined;
 
   const minPrice =
-    typeof rawMinPrice === "string"
-      ? rawMinPrice.trim()
-      : undefined;
+    typeof rawMinPrice === "string" ? rawMinPrice.trim() : undefined;
 
   const maxPrice =
-    typeof rawMaxPrice === "string"
-      ? rawMaxPrice.trim()
-      : undefined;
+    typeof rawMaxPrice === "string" ? rawMaxPrice.trim() : undefined;
 
   if (location !== undefined && location.length > 100) {
     res.status(400).json({
@@ -104,8 +88,7 @@ export const getAccommodations: RequestHandler = async (
     return;
   }
 
-  const pricePattern =
-    /^(0|[1-9]\d{0,7})(\.\d{1,2})?$/;
+  const pricePattern = /^(0|[1-9]\d{0,7})(\.\d{1,2})?$/;
 
   for (const [name, value] of [
     ["minPrice", minPrice],
@@ -137,7 +120,11 @@ export const getAccommodations: RequestHandler = async (
   const numericFilter = (name: string, max: number) => {
     const value = req.query[name];
     if (value === undefined) return undefined;
-    if (typeof value !== "string" || !/^[1-9]\d*$/.test(value) || Number(value) > max) {
+    if (
+      typeof value !== "string" ||
+      !/^[1-9]\d*$/.test(value) ||
+      Number(value) > max
+    ) {
       throw new ApiError(400, name + " must be an integer from 1 to " + max);
     }
     return Number(value);

@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink } from "react-router-dom";
 
 /** Mobile shortcuts keep frequent guest tasks available while browsing hotel pages. */
 export function BottomNav() {
@@ -11,4 +11,3 @@ export function BottomNav() {
     </nav>
   );
 }
-

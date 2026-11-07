@@ -10,9 +10,7 @@ export interface CreateRoomInput {
   isActive: boolean;
 }
 
-export const createRoomForAccommodation = async (
-  data: CreateRoomInput,
-) => {
+export const createRoomForAccommodation = async (data: CreateRoomInput) => {
   return prisma.room.create({
     data: {
       accommodationId: data.accommodationId,
@@ -46,9 +44,6 @@ export const listActiveRoomsByAccommodationId = async (
       isActive: true,
     },
 
-    orderBy: [
-      { pricePerNight: "asc" },
-      { roomNumber: "asc" },
-    ],
+    orderBy: [{ pricePerNight: "asc" }, { roomNumber: "asc" }],
   });
 };

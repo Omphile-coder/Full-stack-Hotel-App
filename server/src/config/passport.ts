@@ -31,9 +31,7 @@ passport.use(
           return done(null, existingUser);
         }
 
-        const email = profile.emails?.[0]?.value
-          .trim()
-          .toLowerCase();
+        const email = profile.emails?.[0]?.value.trim().toLowerCase();
 
         const claims = profile._json as {
           email_verified?: boolean;
@@ -41,8 +39,7 @@ passport.use(
         };
 
         const emailIsVerified =
-          claims.email_verified === true ||
-          claims.verified_email === true;
+          claims.email_verified === true || claims.verified_email === true;
 
         if (!email || !emailIsVerified) {
           return done(null, false, {
@@ -82,30 +79,41 @@ passport.serializeUser((user, done) => {
 });
 
 // Legacy Google sessions store a user ID. Password sessions carry a revocable version.
-passport.deserializeUser(async (session: string | { id: string; passwordVersion: number }, done) => {
-  const id = typeof session === "string" ? session : session.id;
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        profilePicture: true,
-        role: true,
-        passwordVersion: true,
-        oauthProviderId: true,
-      },
-    });
+passport.deserializeUser(
+  async (session: string | { id: string; passwordVersion: number }, done) => {
+    const id = typeof session === "string" ? session : session.id;
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          profilePicture: true,
+          role: true,
+          passwordVersion: true,
+          oauthProviderId: true,
+        },
+      });
 
-    if (!user || (typeof session === "string" ? !user.oauthProviderId : user.passwordVersion !== session.passwordVersion)) {
-      return done(null, false);
+      if (
+        !user ||
+        (typeof session === "string"
+          ? !user.oauthProviderId
+          : user.passwordVersion !== session.passwordVersion)
+      ) {
+        return done(null, false);
+      }
+      const {
+        oauthProviderId: _provider,
+        passwordVersion: _version,
+        ...profile
+      } = user;
+      done(null, profile);
+    } catch (error) {
+      done(error);
     }
-    const { oauthProviderId: _provider, passwordVersion: _version, ...profile } = user;
-    done(null, profile);
-  } catch (error) {
-    done(error);
-  }
-});
+  },
+);
 
 export default passport;

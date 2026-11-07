@@ -32,10 +32,7 @@ export async function findPublishedAccommodationById(id: string) {
       email: true,
 
       images: {
-        orderBy: [
-          { sortOrder: "asc" },
-          { id: "asc" },
-        ],
+        orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
         select: {
           id: true,
           imageUrl: true,
@@ -48,10 +45,7 @@ export async function findPublishedAccommodationById(id: string) {
         where: {
           isActive: true,
         },
-        orderBy: [
-          { pricePerNight: "asc" },
-          { id: "asc" },
-        ],
+        orderBy: [{ pricePerNight: "asc" }, { id: "asc" }],
         select: {
           id: true,
           roomNumber: true,
@@ -89,9 +83,7 @@ export async function findPublishedAccommodationById(id: string) {
       pricePerNight: room.pricePerNight.toFixed(2),
     })),
 
-    fromPrice: cheapestRoom
-      ? cheapestRoom.pricePerNight.toFixed(2)
-      : null,
+    fromPrice: cheapestRoom ? cheapestRoom.pricePerNight.toFixed(2) : null,
 
     currency: "ZAR",
   };
@@ -115,40 +107,31 @@ export async function listPublishedAccommodations(
   }
 
   const roomWhere: Prisma.RoomWhereInput = {
-  isActive: true,
-};
-
-const hasPriceFilter =
-  filters.minPrice !== undefined ||
-  filters.maxPrice !== undefined;
-
-if (hasPriceFilter) {
-  roomWhere.pricePerNight = {
-    ...(filters.minPrice !== undefined
-      ? { gte: filters.minPrice }
-      : {}),
-
-    ...(filters.maxPrice !== undefined
-      ? { lte: filters.maxPrice }
-      : {}),
+    isActive: true,
   };
 
-}
-if (filters.minCapacity !== undefined) {
-  roomWhere.capacity = { gte: filters.minCapacity };
-}
-if (hasPriceFilter || filters.minCapacity !== undefined) {
-  where.rooms = {
-    some: roomWhere,
-  };
+  const hasPriceFilter =
+    filters.minPrice !== undefined || filters.maxPrice !== undefined;
+
+  if (hasPriceFilter) {
+    roomWhere.pricePerNight = {
+      ...(filters.minPrice !== undefined ? { gte: filters.minPrice } : {}),
+
+      ...(filters.maxPrice !== undefined ? { lte: filters.maxPrice } : {}),
+    };
   }
-  
+  if (filters.minCapacity !== undefined) {
+    roomWhere.capacity = { gte: filters.minCapacity };
+  }
+  if (hasPriceFilter || filters.minCapacity !== undefined) {
+    where.rooms = {
+      some: roomWhere,
+    };
+  }
+
   const accommodations = await prisma.accommodation.findMany({
     where,
-    orderBy: [
-      { name: "asc" },
-      { id: "asc" },
-    ],
+    orderBy: [{ name: "asc" }, { id: "asc" }],
     skip: filters.offset ?? 0,
     take: 20,
     select: {
@@ -160,10 +143,7 @@ if (hasPriceFilter || filters.minCapacity !== undefined) {
       starRating: true,
 
       images: {
-        orderBy: [
-          { sortOrder: "asc" },
-          { id: "asc" },
-        ],
+        orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
         take: 1,
         select: {
           imageUrl: true,
@@ -171,12 +151,9 @@ if (hasPriceFilter || filters.minCapacity !== undefined) {
         },
       },
 
-     rooms: {
-  where: roomWhere,
-        orderBy: [
-          { pricePerNight: "asc" },
-          { id: "asc" },
-        ],
+      rooms: {
+        where: roomWhere,
+        orderBy: [{ pricePerNight: "asc" }, { id: "asc" }],
         take: 1,
         select: {
           pricePerNight: true,

@@ -7,7 +7,8 @@ let activeHashes = 0;
 
 /** Cap parallel hashes so bursts of login attempts cannot exhaust server memory. */
 async function derive(password: string, salt: Buffer) {
-  if (activeHashes >= 3) throw new ApiError(503, "Sign-in is busy. Please try again shortly.");
+  if (activeHashes >= 3)
+    throw new ApiError(503, "Sign-in is busy. Please try again shortly.");
   activeHashes++;
   try {
     return await new Promise<Buffer>((resolve, reject) => {
@@ -29,9 +30,20 @@ export async function hashPassword(password: string) {
 }
 
 /** Spend comparable hashing time when the email has no password account. */
-export async function matchesPassword(password: string, stored?: string | null) {
+export async function matchesPassword(
+  password: string,
+  stored?: string | null,
+) {
   const [salt, expected] = (stored ?? dummyHash).split(":");
-  if (!salt || !expected || !/^[\da-f]{32}$/.test(salt) || !/^[\da-f]{128}$/.test(expected)) return false;
+  if (
+    !salt ||
+    !expected ||
+    !/^[\da-f]{32}$/.test(salt) ||
+    !/^[\da-f]{128}$/.test(expected)
+  )
+    return false;
   const actual = await derive(password, Buffer.from(salt, "hex"));
-  return timingSafeEqual(actual, Buffer.from(expected, "hex")) && Boolean(stored);
+  return (
+    timingSafeEqual(actual, Buffer.from(expected, "hex")) && Boolean(stored)
+  );
 }

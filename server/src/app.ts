@@ -28,8 +28,14 @@ app.use(express.json());
 
 app.use((req, _res, next) => {
   const origin = req.get("origin");
-  const clientOrigin = new URL(process.env.CLIENT_URL ?? "http://localhost:5173").origin;
-  if (!["GET", "HEAD", "OPTIONS"].includes(req.method) && origin && origin !== clientOrigin) {
+  const clientOrigin = new URL(
+    process.env.CLIENT_URL ?? "http://localhost:5173",
+  ).origin;
+  if (
+    !["GET", "HEAD", "OPTIONS"].includes(req.method) &&
+    origin &&
+    origin !== clientOrigin
+  ) {
     return next(new ApiError(403, "Untrusted request origin"));
   }
   next();
@@ -44,7 +50,6 @@ app.use(passport.session());
 app.use("/api/v1/auth", passwordAuth, authRouter);
 app.use("/api/v1/accommodations", accommodationsRouter);
 app.use("/api/v1", inventory, bookings, account, payments);
-
 
 app.get("/api/v1/health", (_req, res) => {
   res.status(200).json({
@@ -74,8 +79,7 @@ app.get("/api/v1/health/database", async (_req, res) => {
 // Temporary development endpoint for checking session persistence.
 if (process.env.NODE_ENV !== "production") {
   app.post("/api/v1/auth/session-check", (req, res, next) => {
-    req.session.setupCheckCount =
-      (req.session.setupCheckCount ?? 0) + 1;
+    req.session.setupCheckCount = (req.session.setupCheckCount ?? 0) + 1;
 
     req.session.save((error) => {
       if (error) {

@@ -1,4 +1,4 @@
-//This loads your environment variables and tells Prisma CLI to use the direct Neon connection.
+// loads environment variables and tells Prisma CLI to use the direct Neon connection.
 import "dotenv/config";
 import { defineConfig, env } from "prisma/config";
 

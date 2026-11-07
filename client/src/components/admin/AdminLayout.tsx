@@ -1,9 +1,9 @@
-import { ArrowUpRight, X, Menu } from 'lucide-react';
-import { useState } from 'react';
-import { Link,NavLink,Outlet } from 'react-router-dom';
-import { useSession } from '../../hooks/useSession';
-import { useSignOut } from '../../hooks/useSignOut';
-import { Feedback } from '../shared/Shared';
+import { ArrowUpRight, X, Menu } from "lucide-react";
+import { useState } from "react";
+import { Link, NavLink, Outlet } from "react-router-dom";
+import { useSession } from "../../hooks/useSession";
+import { useSignOut } from "../../hooks/useSignOut";
+import { Feedback } from "../shared/Shared";
 
 /** Staff use a persistent management sidebar and a collapsible mobile menu. */
 export function AdminLayout() {
@@ -29,7 +29,12 @@ export function AdminLayout() {
           aria-controls="staff-menu"
           onClick={() => setOpen(!open)}
         >
-          Menu {open ? <X className="ui-icon" aria-hidden="true" /> : <Menu className="ui-icon" aria-hidden="true" />}
+          Menu{" "}
+          {open ? (
+            <X className="ui-icon" aria-hidden="true" />
+          ) : (
+            <Menu className="ui-icon" aria-hidden="true" />
+          )}
         </button>
       </header>
       <aside
@@ -37,7 +42,7 @@ export function AdminLayout() {
         id="staff-menu"
       >
         <Link className="wordmark" to="/admin">
-          Black Clover 
+          Black Clover
         </Link>
         <p className="eyebrow">ADMINISTRATION</p>
         <nav aria-label="Staff navigation">
@@ -54,7 +59,10 @@ export function AdminLayout() {
         </nav>
         <div className="sidebar-account">
           <p>{user?.name}</p>
-          <Link to="/">Visit guest website <ArrowUpRight className="ui-icon" aria-hidden="true" /></Link>
+          <Link to="/">
+            Visit guest website{" "}
+            <ArrowUpRight className="ui-icon" aria-hidden="true" />
+          </Link>
           <button
             className="button outline"
             disabled={isLoading}
@@ -71,4 +79,3 @@ export function AdminLayout() {
     </div>
   );
 }
-

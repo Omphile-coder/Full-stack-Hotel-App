@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink } from "react-router-dom";
 
 /** Account tabs mirror the separate guest pages while preserving deep links. */
 export function AccountNavigation() {

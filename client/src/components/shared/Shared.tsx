@@ -1,6 +1,6 @@
-import type { PropsWithChildren,ReactNode } from 'react';
-import { useEffect,useState } from 'react';
-import { errorMessage } from '../../lib/format';
+import type { PropsWithChildren, ReactNode } from "react";
+import { useEffect, useState } from "react";
+import { errorMessage } from "../../lib/format";
 
 /** Keep headings consistent with the typography and spacing in both Figma prototypes. */
 export function Heading({
@@ -141,4 +141,3 @@ export function ConfirmDialog({
     </dialog>
   );
 }
-

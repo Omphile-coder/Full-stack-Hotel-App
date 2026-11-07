@@ -1,6 +1,6 @@
-import { Link,Navigate,Outlet,useLocation } from 'react-router-dom';
-import { api } from '../../lib/api';
-import { Feedback,Heading } from './Shared';
+import { Link, Navigate, Outlet, useLocation } from "react-router-dom";
+import { api } from "../../lib/api";
+import { Feedback, Heading } from "./Shared";
 
 /** Protect guest and staff screens while the backend remains the permission authority. */
 export function Protected({ admin = false }: { admin?: boolean }) {
