@@ -5,6 +5,7 @@ import prisma from "./config/prisma.js";
 import sessionMiddleware from "./config/session.js";
 import passport from "./config/passport.js";
 import authRouter from "./routes/auth.js";
+import { passwordAuth } from "./routes/passwordAuth.js";
 import accommodationsRouter from "./routes/accommodations.js";
 
 import { ApiError, apiErrors } from "./api.js";
@@ -40,7 +41,7 @@ app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/auth", passwordAuth, authRouter);
 app.use("/api/v1/accommodations", accommodationsRouter);
 app.use("/api/v1", inventory, bookings, account, payments);
 

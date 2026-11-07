@@ -50,8 +50,8 @@ passport.use(
           });
         }
 
-        const emailOwner = await prisma.user.findUnique({
-          where: { email },
+        const emailOwner = await prisma.user.findFirst({
+          where: { email: { equals: email, mode: "insensitive" } },
         });
 
         if (emailOwner) {
@@ -78,10 +78,12 @@ passport.use(
 );
 
 passport.serializeUser((user, done) => {
-  done(null, user.id);
+  done(null, { id: user.id, passwordVersion: user.passwordVersion ?? 0 });
 });
 
-passport.deserializeUser(async (id: string, done) => {
+// Legacy Google sessions store a user ID. Password sessions carry a revocable version.
+passport.deserializeUser(async (session: string | { id: string; passwordVersion: number }, done) => {
+  const id = typeof session === "string" ? session : session.id;
   try {
     const user = await prisma.user.findUnique({
       where: { id },
@@ -91,10 +93,16 @@ passport.deserializeUser(async (id: string, done) => {
         email: true,
         profilePicture: true,
         role: true,
+        passwordVersion: true,
+        oauthProviderId: true,
       },
     });
 
-    done(null, user ?? false);
+    if (!user || (typeof session === "string" ? !user.oauthProviderId : user.passwordVersion !== session.passwordVersion)) {
+      return done(null, false);
+    }
+    const { oauthProviderId: _provider, passwordVersion: _version, ...profile } = user;
+    done(null, profile);
   } catch (error) {
     done(error);
   }

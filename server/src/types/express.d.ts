@@ -6,7 +6,9 @@ declare global {
       extends Pick<
         DatabaseUser,
         "id" | "name" | "email" | "profilePicture" | "role"
-      > {}
+      > {
+        passwordVersion?: number;
+      }
   }
 }
 
