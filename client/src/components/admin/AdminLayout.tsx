@@ -21,7 +21,7 @@ export function AdminLayout() {
     <div className="admin-workspace">
       <header className="admin-mobile-header">
         <Link className="wordmark" to="/admin">
-          HALDEN · ADMIN
+          Black Clover · Admin
         </Link>
         <button
           className="menu-toggle"
