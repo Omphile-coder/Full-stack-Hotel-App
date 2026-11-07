@@ -1,141 +1,119 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import express, { Router } from "express";
 import prisma from "../config/prisma.js";
 import { requireAuth } from "../middleware/auth.js";
-import { ApiError, send, uuid } from "../api.js";
+import { ApiError, object, send, uuid } from "../api.js";
+import { checkoutUrl, initializePaystack, paymentCallback, paymentReference, paystackKey, validPaystackSignature, verifyPaystack } from "../services/paystack.js";
+import type { PaystackTransaction } from "../services/paystack.js";
 import { transactionOptions } from "./bookings.js";
 
-interface Checkout {
-  id: string;
-  url: string | null;
-  status: "open" | "complete" | "expired";
-  payment_status: string;
-  amount_total: number;
-  currency: string;
-  client_reference_id: string;
-}
-
-async function stripe(path: string, key: string, body?: URLSearchParams, id?: string): Promise<Checkout> {
-  try {
-    const response = await fetch("https://api.stripe.com/v1/checkout/sessions" + path, {
-      method: body ? "POST" : "GET",
-      headers: { Authorization: "Bearer " + key, ...(id ? { "Idempotency-Key": id } : {}) },
-      body,
-      signal: AbortSignal.timeout(10000),
+/** Match the verified amount, currency, and reference before changing a payment. */
+async function settle(transaction: PaystackTransaction) {
+  const reference = paymentReference(transaction.reference);
+  return prisma.$transaction(async tx => {
+    const payment = await tx.payment.findUnique({
+      where: { provider_providerReference: { provider: "paystack", providerReference: reference } }, include: { booking: true },
     });
-    if (response.ok) return await response.json() as Checkout;
-    console.error("Stripe Checkout returned", response.status);
-  } catch (error) {
-    console.error("Stripe Checkout request failed", error instanceof Error ? error.name : "unknown");
-  }
-  throw new ApiError(502, "Payment provider is temporarily unavailable");
+    if (!payment) throw new ApiError(404, "Payment not found");
+    if (!Number.isSafeInteger(transaction.amount) || !payment.amount.times(100).equals(transaction.amount) || payment.currency !== transaction.currency) {
+      throw new ApiError(409, "Paystack transaction does not match this reservation");
+    }
+    if (transaction.status === "success" && payment.status !== "COMPLETED") {
+      const result = await tx.payment.updateMany({
+        where: { id: payment.id, status: { not: "COMPLETED" } }, data: { status: "COMPLETED", paidAt: new Date() },
+      });
+      if (result.count) await tx.notification.create({ data: {
+        userId: payment.booking.userId, bookingId: payment.bookingId,
+        message: payment.booking.status === "CANCELLED"
+          ? "Payment received for a cancelled reservation. Contact the hotel for assistance." : "Your reservation payment was confirmed.",
+      } });
+    } else if (transaction.status === "failed" && payment.status === "PENDING") {
+      await tx.payment.update({ where: { id: payment.id }, data: { status: "FAILED" } });
+    }
+    // Abandoned means unfinished, so preserve the same resumable checkout. Reversals require reconciliation.
+    const updated = await tx.payment.findUniqueOrThrow({ where: { id: payment.id } });
+    return { paymentId: updated.id, bookingId: updated.bookingId, status: updated.status };
+  }, transactionOptions);
 }
 
 export const payments = Router();
 payments.post("/bookings/:id/checkout", requireAuth, async (req, res) => {
-  const key = process.env.STRIPE_SECRET_KEY;
-  const successUrl = process.env.STRIPE_SUCCESS_URL;
-  const cancelUrl = process.env.STRIPE_CANCEL_URL;
-  if (!key || !successUrl || !cancelUrl || !process.env.STRIPE_WEBHOOK_SECRET) {
-    throw new ApiError(503, "Checkout is not configured");
-  }
+  paystackKey();
+  const callback = paymentCallback();
   const bookingId = uuid(req.params.id);
-  const payment = await prisma.$transaction(async (tx) => {
+  // Serializable reads prevent concurrent requests from creating separate pending attempts.
+  const payment = await prisma.$transaction(async tx => {
     const booking = await tx.booking.findUniqueOrThrow({
-      where: { id: bookingId, userId: req.user!.id },
-      include: { payments: { where: { status: { not: "FAILED" } } } },
+      where: { id: bookingId, userId: req.user!.id }, include: { payments: { where: { status: { not: "FAILED" } } } },
     });
-    if (booking.status !== "APPROVED" || booking.checkOutDate.getTime() <= Date.now()) {
-      throw new ApiError(409, "Checkout requires an approved reservation with a future checkout date");
+    if (booking.status === "CANCELLED" || booking.checkOutDate.getTime() <= Date.now()) {
+      throw new ApiError(409, "Checkout requires an active reservation with a future checkout date");
     }
-    if (booking.payments.some((payment) => payment.status === "COMPLETED")) {
-      throw new ApiError(409, "Reservation is already paid");
-    }
+    if (booking.payments.some(item => item.status === "COMPLETED")) throw new ApiError(409, "Reservation is already paid");
     const pending = booking.payments[0];
     if (pending) {
-      if (pending.provider !== "stripe") throw new ApiError(409, "Another payment is already pending");
+      if (pending.provider !== "paystack") throw new ApiError(409, "An earlier payment requires reconciliation before Paystack checkout can start. Contact the hotel.");
       return pending;
     }
-    return tx.payment.create({ data: { bookingId, amount: booking.totalPrice, provider: "stripe" } });
+    const id = randomUUID();
+    return tx.payment.create({ data: { id, bookingId, amount: booking.totalPrice, provider: "paystack", providerReference: "hotel-" + id } });
   }, transactionOptions);
-
-  if (!payment.providerReference && Date.now() - payment.createdAt.getTime() >= 23 * 3600000) {
-    throw new ApiError(409, "This checkout attempt requires reconciliation");
+  const reference = paymentReference(payment.providerReference);
+  const bookingUrl = new URL("/bookings/" + bookingId, callback).href;
+  if (payment.checkoutUrl) {
+    const transaction = await verifyPaystack(reference);
+    if (transaction.reference !== reference) throw new ApiError(409, "Paystack returned a different transaction reference");
+    const result = await settle(transaction);
+    if (result.status === "COMPLETED") return send(res, { url: bookingUrl, paymentId: payment.id });
+    if (transaction.status === "failed") throw new ApiError(409, "This payment attempt failed. Retry secure payment for a new attempt.");
+    if (!["abandoned", "pending"].includes(transaction.status)) throw new ApiError(409, "Payment is being processed or requires review. Check payment status before retrying.");
+    return send(res, { url: checkoutUrl(payment.checkoutUrl), paymentId: payment.id });
   }
-  const session = payment.providerReference
-    ? await stripe("/" + encodeURIComponent(payment.providerReference), key)
-    : await stripe("", key, new URLSearchParams({
-      mode: "payment",
-      "payment_method_types[0]": "card",
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-      client_reference_id: payment.id,
-      "line_items[0][quantity]": "1",
-      "line_items[0][price_data][currency]": payment.currency.toLowerCase(),
-      "line_items[0][price_data][unit_amount]": payment.amount.times(100).toFixed(0),
-      "line_items[0][price_data][product_data][name]": "Hotel reservation",
-    }), payment.id);
-  await prisma.payment.updateMany({
-    where: { id: payment.id, status: "PENDING", providerReference: null },
-    data: { providerReference: session.id },
-  });
-  if (session.status === "expired") {
-    await settle(session, "FAILED");
-    throw new ApiError(409, "Checkout expired. Submit a new checkout request.");
+  try {
+    const initialized = await initializePaystack({
+      email: req.user!.email, amount: payment.amount.times(100).toFixed(0), currency: payment.currency, reference, callback_url: callback,
+    });
+    if (initialized.reference !== reference) throw new ApiError(502, "Paystack returned a different transaction reference");
+    const url = checkoutUrl(initialized.authorization_url);
+    await prisma.payment.updateMany({ where: { id: payment.id, status: "PENDING", checkoutUrl: null }, data: { checkoutUrl: url } });
+    send(res, { url, paymentId: payment.id });
+  } catch (error) {
+    // Initialization may succeed before a timeout. Keep the reference to avoid a second charge.
+    const saved = await prisma.payment.findUniqueOrThrow({ where: { id: payment.id } });
+    if (saved.checkoutUrl) return send(res, { url: checkoutUrl(saved.checkoutUrl), paymentId: payment.id });
+    try {
+      const transaction = await verifyPaystack(reference);
+      if (transaction.reference === reference) {
+        const result = await settle(transaction);
+        if (result.status === "COMPLETED") return send(res, { url: bookingUrl, paymentId: payment.id });
+      }
+    } catch { /* Preserve the attempt for a safe retry or provider reconciliation. */ }
+    throw error;
   }
-  if (!session.url || session.status !== "open") {
-    if (session.payment_status === "paid") await settle(session, "COMPLETED");
-    throw new ApiError(409, "Checkout has already ended");
-  }
-  send(res, { url: session.url, paymentId: payment.id });
 });
 
-async function settle(session: Checkout, status: "COMPLETED" | "FAILED") {
-  const id = uuid(session.client_reference_id);
-  await prisma.$transaction(async (tx) => {
-    const payment = await tx.payment.findUnique({ where: { id }, include: { booking: true } });
-    if (!payment || payment.provider !== "stripe" || payment.status !== "PENDING") return;
-    if ((payment.providerReference && payment.providerReference !== session.id) ||
-      !payment.amount.times(100).equals(session.amount_total) ||
-      payment.currency.toLowerCase() !== session.currency) {
-      throw new ApiError(409, "Checkout details do not match this payment");
-    }
-    const result = await tx.payment.updateMany({
-      where: { id, status: "PENDING" },
-      data: { status, providerReference: session.id, paidAt: status === "COMPLETED" ? new Date() : null },
-    });
-    if (result.count && status === "COMPLETED") {
-      await tx.notification.create({ data: {
-        userId: payment.booking.userId, bookingId: payment.bookingId, message: "Your reservation payment was confirmed.",
-      } });
-    }
-  }, transactionOptions);
-}
+/** Return parameters identify an attempt; only server verification determines its result. */
+payments.post("/payments/paystack/verify", requireAuth, async (req, res) => {
+  const reference = paymentReference(object(req.body).reference);
+  await prisma.payment.findFirstOrThrow({ where: { provider: "paystack", providerReference: reference, booking: { userId: req.user!.id } } });
+  const transaction = await verifyPaystack(reference);
+  if (transaction.reference !== reference) throw new ApiError(409, "Paystack returned a different transaction reference");
+  send(res, await settle(transaction));
+});
 
-function verify(body: Buffer, header: string, secret: string) {
-  const parts = header.split(",");
-  const timestamp = parts.find((part) => part.startsWith("t="))?.slice(2);
-  if (!timestamp || !/^\d+$/.test(timestamp) || Math.abs(Date.now() / 1000 - Number(timestamp)) > 300) return false;
-  const expected = createHmac("sha256", secret).update(timestamp + ".").update(body).digest();
-  return parts.some((part) => /^v1=[0-9a-f]{64}$/i.test(part) &&
-    timingSafeEqual(expected, Buffer.from(part.slice(3), "hex")));
-}
-
-export const stripeWebhook = Router();
-stripeWebhook.post("/", express.raw({ type: "application/json" }), async (req, res) => {
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!secret) throw new ApiError(503, "Checkout is not configured");
-  if (!Buffer.isBuffer(req.body) || !verify(req.body, req.get("stripe-signature") ?? "", secret)) {
-    throw new ApiError(400, "Invalid Stripe signature");
+export const paystackWebhook = Router();
+paystackWebhook.post("/", express.raw({ type: "application/json", limit: "256kb" }), async (req, res) => {
+  if (!Buffer.isBuffer(req.body) || !validPaystackSignature(req.body, req.get("paystack-signature"), req.get("x-paystack-signature"))) throw new ApiError(401, "Invalid Paystack signature");
+  let event: { event?: string; data?: PaystackTransaction };
+  try { event = JSON.parse(req.body.toString("utf8")) as typeof event; }
+  catch { throw new ApiError(400, "Invalid webhook JSON"); }
+  if (event?.event === "charge.success" && event.data?.status === "success") {
+    const reference = event.data.reference;
+    if (typeof reference !== "string" || reference.length > 100) return void res.sendStatus(200);
+    // A shared merchant account can send transactions belonging to other applications.
+    const payment = await prisma.payment.findUnique({ where: { provider_providerReference: { provider: "paystack", providerReference: reference } } });
+    if (payment) await settle(event.data);
   }
-  const event = JSON.parse(req.body.toString("utf8")) as { type: string; data: { object: Checkout } };
-  const session = event.data.object;
-  if (session?.client_reference_id) {
-    if (event.type === "checkout.session.completed" && session.payment_status === "paid") {
-      await settle(session, "COMPLETED");
-    } else if (event.type === "checkout.session.expired") {
-      await settle(session, "FAILED");
-    }
-  }
-  res.sendStatus(204);
+  // Acknowledge after durable settlement so database failures are retried by Paystack.
+  res.sendStatus(200);
 });

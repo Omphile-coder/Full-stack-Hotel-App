@@ -11,7 +11,7 @@ import { ApiError, apiErrors } from "./api.js";
 import { account } from "./routes/account.js";
 import { bookings } from "./routes/bookings.js";
 import { inventory } from "./routes/inventory.js";
-import { payments, stripeWebhook } from "./routes/payments.js";
+import { payments, paystackWebhook } from "./routes/payments.js";
 
 const app = express();
 
@@ -22,7 +22,7 @@ app.use(
   }),
 );
 
-app.use("/api/v1/payments/stripe/webhook", stripeWebhook);
+app.use("/api/v1/payments/paystack/webhook", paystackWebhook);
 app.use(express.json());
 
 app.use((req, _res, next) => {
