@@ -6,7 +6,7 @@ import { ApiError, integer, object, page, send, uuid } from "../api.js";
 
 export const bookingDetails = {
   bookingRooms: { include: { room: { include: { accommodation: { select: { id: true, name: true } } } } } },
-  payments: { select: { id: true, amount: true, currency: true, status: true, paidAt: true } },
+  payments: { select: { id: true, amount: true, currency: true, status: true, paidAt: true, provider: true, providerReference: true } },
 } satisfies Prisma.BookingInclude;
 
 export const transactionOptions = { isolationLevel: "Serializable" } as const;
@@ -86,10 +86,11 @@ bookings.post("/bookings", requireAuth, async (req, res) => {
   const booking = await prisma.$transaction(async (tx) => {
     const { fields, rooms } = await reservation(tx, req.body);
     const created = await tx.booking.create({
-      data: { ...fields, userId, bookingRooms: { create: rooms } }, include: bookingDetails,
+      // Rooms are reserved immediately; verified payment completes confirmation.
+      data: { ...fields, userId, status: "APPROVED", bookingRooms: { create: rooms } }, include: bookingDetails,
     });
     await tx.notification.create({
-      data: { userId, bookingId: created.id, message: "Your reservation was received and is awaiting approval." },
+      data: { userId, bookingId: created.id, message: "Your rooms are reserved. Complete secure payment to confirm your stay." },
     });
     return created;
   }, transactionOptions);
