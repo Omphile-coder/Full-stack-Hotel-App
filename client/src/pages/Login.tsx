@@ -1,7 +1,7 @@
 import goldClover from "../assets/gold-clover.png";
 import { FcGoogle } from "react-icons/fc";
 import { ArrowLeft } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import {
   Link,
   NavLink,
@@ -25,7 +25,7 @@ function CredentialsForm({
   callback: string;
   query: string;
 }) {
-  const [busy, setBusy] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<unknown>();
   const [mismatch, setMismatch] = useState(false);
 
@@ -38,14 +38,14 @@ function CredentialsForm({
     setMismatch(passwordsDiffer);
     if (passwordsDiffer) return;
     fields.delete("confirmPassword");
-    setBusy(true);
+    setIsSubmitting(true);
     try {
       await submitCredentials(signup ? "register" : "login", fields);
       // Reload the app to read the new session and discard the previous account's cached data.
       window.location.replace(callback);
     } catch (requestError) {
       setError(requestError);
-      setBusy(false);
+      setIsSubmitting(false);
     }
   }
 
@@ -89,8 +89,8 @@ function CredentialsForm({
         </p>
       )}
       <Feedback error={error} />
-      <button className="button full" disabled={busy}>
-        {busy ? "Please wait…" : signup ? "Create account" : "Log in"}
+      <button className="button full" disabled={isSubmitting}>
+        {isSubmitting ? "Please wait…" : signup ? "Create account" : "Log in"}
       </button>
     </form>
   );
@@ -103,12 +103,22 @@ export function Login() {
   const signup = pathname === "/register";
   const session = useSession();
   const next = safeReturnPath(params.get("next"));
-  const [starting, setStarting] = useState(false);
+  const [isOpeningGoogle, setIsOpeningGoogle] = useState(false);
   const query = next ? "?next=" + encodeURIComponent(next) : "";
   const callback = "/auth/callback" + query;
 
+  useEffect(() => {
+    // Browser Back can restore the page while the Google button is still loading.
+    function resetGoogleLoading(event: PageTransitionEvent) {
+      if (event.persisted) setIsOpeningGoogle(false);
+    }
+
+    window.addEventListener("pageshow", resetGoogleLoading);
+    return () => window.removeEventListener("pageshow", resetGoogleLoading);
+  }, []);
+
   function signInWithGoogle() {
-    setStarting(true);
+    setIsOpeningGoogle(true);
     session.startGoogle(callback);
   }
 
@@ -151,11 +161,11 @@ export function Login() {
         </p>
         <button
           className="button outline full"
-          disabled={starting}
+          disabled={isOpeningGoogle}
           onClick={signInWithGoogle}
         >
           <FcGoogle className="ui-icon google-icon" aria-hidden="true" />
-          {starting ? "Opening Google…" : "Continue with Google"}
+          {isOpeningGoogle ? "Opening Google…" : "Continue with Google"}
         </button>
         {session.user && (
           <Link
