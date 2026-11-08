@@ -6,7 +6,7 @@ Guests can explore hotel branches, check room availability, book a stay, and pay
 
 ## Preview
 
-![Cape Town photography from the Black Clover landing page](client/public/images/figma/preview_image.png)
+![Black Clover Hotels website preview](client/public/images/preview_image.png)
 
 ## Tech stack
 
