@@ -3,8 +3,7 @@ import type { PropsWithChildren } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { ConfirmDialog } from "../components/shared/Shared";
-import { api, apiBase } from "../lib/api";
-import { safeReturnPath } from "../lib/auth";
+import { api } from "../lib/api";
 import { clearStay } from "../lib/bookingDraft";
 import type { Confirmation } from "./sessionContext";
 import { SessionContext } from "./sessionContext";
@@ -38,14 +37,6 @@ export function AppProvider({ children }: PropsWithChildren) {
     setDialog(null);
   }, []);
 
-  /** Google establishes the server session before returning to a local frontend route. */
-  const startGoogle = useCallback((returnTo: string) => {
-    const destination = safeReturnPath(returnTo) || "/auth/callback";
-    window.location.assign(
-      apiBase + "/auth/google?returnTo=" + encodeURIComponent(destination),
-    );
-  }, []);
-
   const logout = useCallback(async () => {
     await endSession().unwrap();
     dispatch(clearStay());
@@ -58,7 +49,6 @@ export function AppProvider({ children }: PropsWithChildren) {
       loading: session.isLoading,
       error: session.error,
       refresh: session.refetch,
-      startGoogle,
       logout,
       logoutPending: logoutState.isLoading,
       logoutError: logoutState.error,
@@ -70,7 +60,6 @@ export function AppProvider({ children }: PropsWithChildren) {
       session.isLoading,
       session.error,
       session.refetch,
-      startGoogle,
       logout,
       logoutState.isLoading,
       logoutState.error,

@@ -1,7 +1,7 @@
 import goldClover from "../assets/gold-clover.png";
 import { FcGoogle } from "react-icons/fc";
 import { ArrowLeft } from "lucide-react";
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import {
   Link,
   NavLink,
@@ -12,6 +12,7 @@ import {
 import { PasswordField } from "../components/guest/PasswordField";
 import { Feedback, Field } from "../components/shared/Shared";
 import { useSession } from "../hooks/useSession";
+import { apiBase } from "../lib/api";
 import { accountDestination, safeReturnPath } from "../lib/auth";
 import { submitCredentials } from "../lib/credentials";
 
@@ -103,24 +104,12 @@ export function Login() {
   const signup = pathname === "/register";
   const session = useSession();
   const next = safeReturnPath(params.get("next"));
-  const [isOpeningGoogle, setIsOpeningGoogle] = useState(false);
   const query = next ? "?next=" + encodeURIComponent(next) : "";
   const callback = "/auth/callback" + query;
 
-  useEffect(() => {
-    // Browser Back can restore the page while the Google button is still loading.
-    function resetGoogleLoading(event: PageTransitionEvent) {
-      if (event.persisted) setIsOpeningGoogle(false);
-    }
-
-    window.addEventListener("pageshow", resetGoogleLoading);
-    return () => window.removeEventListener("pageshow", resetGoogleLoading);
-  }, []);
-
-  function signInWithGoogle() {
-    setIsOpeningGoogle(true);
-    session.startGoogle(callback);
-  }
+  // Use a normal link so cancelling navigation leaves Google sign-in available.
+  const googleSignInUrl =
+    apiBase + "/auth/google?returnTo=" + encodeURIComponent(callback);
 
   if (params.get("complete") === "1") return <Navigate to={callback} replace />;
   return (
@@ -159,14 +148,10 @@ export function Login() {
         <p className="auth-divider" aria-hidden="true">
           or
         </p>
-        <button
-          className="button outline full"
-          disabled={isOpeningGoogle}
-          onClick={signInWithGoogle}
-        >
+        <a className="button outline full" href={googleSignInUrl}>
           <FcGoogle className="ui-icon google-icon" aria-hidden="true" />
-          {isOpeningGoogle ? "Opening Google…" : "Continue with Google"}
-        </button>
+          Continue with Google
+        </a>
         {session.user && (
           <Link
             className="button outline full"

@@ -11,7 +11,6 @@ export interface AppSession {
   loading: boolean;
   error: unknown;
   refresh: () => void;
-  startGoogle: (returnTo: string) => void;
   logout: () => Promise<void>;
   logoutPending: boolean;
   logoutError: unknown;
