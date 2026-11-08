@@ -4,6 +4,9 @@ A full-stack hotel booking and management application for Black Clover’s South
 
 Guests can explore hotel branches, check room availability, book a stay, and pay through Paystack. Hotel staff use a separate admin dashboard to manage properties, room inventory, reservations, and promotions. The React frontend lives in `client/`, and the Express API in `server/` connects to Neon PostgreSQL through Prisma.
 
+**Live application:** [https://full-stack-hotel-app-nine.vercel.app](https://full-stack-hotel-app-nine.vercel.app)\
+**API health check:** [https://black-clover-api.onrender.com/api/v1/health](https://black-clover-api.onrender.com/api/v1/health)
+
 ## Preview
 
 ![Black Clover Hotels website preview](client/public/images/preview_image.png)
