@@ -16,6 +16,10 @@ import { payments, paystackWebhook } from "./routes/payments.js";
 
 const app = express();
 
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
 app.use(
   cors({
     origin: process.env.CLIENT_URL ?? "http://localhost:5173",
