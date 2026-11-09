@@ -6,6 +6,7 @@ import { chooseStay } from "../../lib/bookingDraft";
 import { calendarDate, today } from "../../lib/format";
 import type { RootState } from "../../store";
 import { Field } from "../shared/Shared";
+import { PriceRange } from "./PriceRange";
 
 /** Search starts the same stay draft used by hotel selection, checkout, and sign-in. */
 export function SearchForm({
@@ -36,12 +37,6 @@ export function SearchForm({
         checkInDate < today())
     ) {
       setError("Choose valid dates starting today or later.");
-      return;
-    }
-    const minPrice = String(form.get("minPrice") || "");
-    const maxPrice = String(form.get("maxPrice") || "");
-    if (minPrice && maxPrice && Number(minPrice) > Number(maxPrice)) {
-      setError("Maximum price must be at least the minimum price.");
       return;
     }
     const next = new URLSearchParams();
@@ -128,26 +123,7 @@ export function SearchForm({
       >
         <summary>Price {"&"} rating filters</summary>
         <div className="grid three">
-          <Field label="Minimum price / night">
-            <input
-              name="minPrice"
-              type="number"
-              min="0"
-              max="99999999.99"
-              step="0.01"
-              defaultValue={params.get("minPrice") || ""}
-            />
-          </Field>
-          <Field label="Maximum price / night">
-            <input
-              name="maxPrice"
-              type="number"
-              min="0"
-              max="99999999.99"
-              step="0.01"
-              defaultValue={params.get("maxPrice") || ""}
-            />
-          </Field>
+          <PriceRange params={params} />
           <Field label="Minimum stars">
             <select name="minStars" defaultValue={params.get("minStars") || ""}>
               <option value="">Any rating</option>
