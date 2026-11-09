@@ -220,5 +220,5 @@ The backend test command builds the API and runs the Paystack regression suite w
 ## Admin Logins:
 Email: Admin@gmail.com
 <br/>
-Passowrd: Admin23@gmail.com
+Password: Admin23@gmail.com
 
