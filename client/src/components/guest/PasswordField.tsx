@@ -8,14 +8,19 @@ export function PasswordField({
   label,
   name = "password",
   newPassword = false,
+  error,
 }: {
   label: string;
   name?: string;
   newPassword?: boolean;
+  error?: string;
 }) {
   const id = useId();
   const showGuide = name === "password";
   const showLengthHint = showGuide && newPassword;
+  const description = [showLengthHint && id + "-hint", error && id + "-error"]
+    .filter(Boolean)
+    .join(" ");
   const [visible, setVisible] = useState(false);
   return (
     <div className="field">
@@ -28,7 +33,8 @@ export function PasswordField({
           required
           autoComplete={newPassword ? "new-password" : "current-password"}
           minLength={newPassword ? minimumNewPasswordLength : undefined}
-          aria-describedby={showLengthHint ? id + "-hint" : undefined}
+          aria-describedby={description || undefined}
+          aria-invalid={error ? true : undefined}
           maxLength={128}
         />
         <button
@@ -47,6 +53,11 @@ export function PasswordField({
       {showLengthHint && (
         <p id={id + "-hint"} className="auth-help">
           Use at least {minimumNewPasswordLength} characters. Spaces are allowed.
+        </p>
+      )}
+      {error && (
+        <p id={id + "-error"} className="notice error" role="alert">
+          {error}
         </p>
       )}
       {showGuide && (

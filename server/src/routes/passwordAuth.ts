@@ -4,6 +4,7 @@ import { ApiError, object, string } from "../api.js";
 import prisma from "../config/prisma.js";
 import { Prisma } from "../generated/prisma/client.js";
 import { hashPassword, matchesPassword } from "../services/password.js";
+import { isStrongPassword } from "../services/passwordStrength.js";
 
 const sessionUser = {
   id: true,
@@ -140,6 +141,12 @@ passwordAuth.post("/register", limitAttempts(8), async (req, res) => {
   const name = string(body.name, "Full name", 100);
   const email = emailAddress(body.email);
   const password = passwordInput(body.password, minimumNewPasswordLength);
+  if (!isStrongPassword(password, name, email)) {
+    throw new ApiError(
+      422,
+      "Choose a stronger password. Use a random mix of uppercase and lowercase letters, numbers, and symbols, or 4 to 7 different, unrelated words.",
+    );
+  }
   const duplicate = new ApiError(
     409,
     "An account already uses this email. Sign in with your original method.",

@@ -15,6 +15,7 @@ import { useSession } from "../hooks/useSession";
 import { apiBase } from "../lib/api";
 import { accountDestination, safeReturnPath } from "../lib/auth";
 import { submitCredentials } from "../lib/credentials";
+import { errorMessage } from "../lib/format";
 
 /** Keep form validation and pending feedback local to the selected login or sign-up tab. */
 function CredentialsForm({
@@ -29,6 +30,14 @@ function CredentialsForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<unknown>();
   const [mismatch, setMismatch] = useState(false);
+  const passwordError =
+    signup &&
+    error &&
+    typeof error === "object" &&
+    "status" in error &&
+    error.status === 422
+      ? errorMessage(error)
+      : undefined;
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -66,7 +75,7 @@ function CredentialsForm({
           required
         />
       </Field>
-      <PasswordField label="Password" newPassword={signup} />
+      <PasswordField label="Password" newPassword={signup} error={passwordError} />
       {signup ? (
         <>
           <PasswordField
@@ -88,7 +97,7 @@ function CredentialsForm({
           The passwords must match.
         </p>
       )}
-      <Feedback error={error} />
+      {!passwordError && <Feedback error={error} />}
       <button className="button full" disabled={isSubmitting}>
         {isSubmitting ? "Please wait…" : signup ? "Create account" : "Log in"}
       </button>
