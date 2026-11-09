@@ -75,7 +75,12 @@ function CredentialsForm({
           required
         />
       </Field>
-      <PasswordField label="Password" newPassword={signup} error={passwordError} />
+      <PasswordField
+        label="Password"
+        newPassword={signup}
+        showGuide={signup}
+        error={passwordError}
+      />
       {signup ? (
         <>
           <PasswordField

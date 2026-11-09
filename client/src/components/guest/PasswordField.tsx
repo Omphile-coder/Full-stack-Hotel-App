@@ -8,16 +8,17 @@ export function PasswordField({
   label,
   name = "password",
   newPassword = false,
+  showGuide = false,
   error,
 }: {
   label: string;
   name?: string;
   newPassword?: boolean;
+  showGuide?: boolean;
   error?: string;
 }) {
   const id = useId();
-  const showGuide = name === "password";
-  const showLengthHint = showGuide && newPassword;
+  const showLengthHint = newPassword && name === "password";
   const description = [showLengthHint && id + "-hint", error && id + "-error"]
     .filter(Boolean)
     .join(" ");
