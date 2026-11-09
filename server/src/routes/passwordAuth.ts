@@ -14,6 +14,7 @@ const sessionUser = {
   passwordVersion: true,
 } as const;
 const resetLifetimeMs = 30 * 60 * 1000;
+const minimumNewPasswordLength = 16;
 
 /** Use the same normalized email format as Google account registration. */
 function emailAddress(value: unknown) {
@@ -33,7 +34,7 @@ function passwordInput(value: unknown, minimum: number) {
     throw new ApiError(
       400,
       minimum > 1
-        ? "Choose a password with 15 to 128 characters."
+        ? `Choose a password with ${minimum} to 128 characters.`
         : "Enter your password.",
     );
   }
@@ -138,7 +139,7 @@ passwordAuth.post("/register", limitAttempts(8), async (req, res) => {
   const body = object(req.body);
   const name = string(body.name, "Full name", 100);
   const email = emailAddress(body.email);
-  const password = passwordInput(body.password, 15);
+  const password = passwordInput(body.password, minimumNewPasswordLength);
   const duplicate = new ApiError(
     409,
     "An account already uses this email. Sign in with your original method.",
@@ -176,7 +177,10 @@ passwordAuth.post("/login", limitAttempts(12), async (req, res) => {
   });
   const matches = await matchesPassword(password, account?.passwordHash);
   if (!account || !matches)
-    throw new ApiError(401, "Email or password is incorrect.");
+    throw new ApiError(
+      401,
+      "Email or password is incorrect. Try again or use Forgot password.",
+    );
   const { passwordHash: _passwordHash, ...user } = account;
   await establishSession(req, user);
   res.json({ success: true });
@@ -213,7 +217,7 @@ passwordAuth.post("/forgot-password", limitAttempts(5), (req, res) => {
 
 passwordAuth.post("/reset-password", limitAttempts(10), async (req, res) => {
   const body = object(req.body);
-  const password = passwordInput(body.password, 15);
+  const password = passwordInput(body.password, minimumNewPasswordLength);
   const invalidLink = new ApiError(
     400,
     "This reset link is invalid or expired. Request a new one.",

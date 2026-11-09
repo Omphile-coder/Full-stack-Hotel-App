@@ -1,6 +1,8 @@
 import { Eye, EyeOff } from "lucide-react";
 import { useId, useState } from "react";
 
+const minimumNewPasswordLength = 16;
+
 /** Give each password field an independent visibility toggle and a native label. */
 export function PasswordField({
   label,
@@ -12,6 +14,8 @@ export function PasswordField({
   newPassword?: boolean;
 }) {
   const id = useId();
+  const showGuide = name === "password";
+  const showLengthHint = showGuide && newPassword;
   const [visible, setVisible] = useState(false);
   return (
     <div className="field">
@@ -23,7 +27,8 @@ export function PasswordField({
           type={visible ? "text" : "password"}
           required
           autoComplete={newPassword ? "new-password" : "current-password"}
-          minLength={newPassword ? 15 : undefined}
+          minLength={newPassword ? minimumNewPasswordLength : undefined}
+          aria-describedby={showLengthHint ? id + "-hint" : undefined}
           maxLength={128}
         />
         <button
@@ -39,6 +44,29 @@ export function PasswordField({
           )}
         </button>
       </div>
+      {showLengthHint && (
+        <p id={id + "-hint"} className="auth-help">
+          Use at least {minimumNewPasswordLength} characters. Spaces are allowed.
+        </p>
+      )}
+      {showGuide && (
+        <details className="auth-help password-guide">
+          <summary>How to make a strong password</summary>
+          <ul>
+            <li>
+              <strong>Long.</strong> Choose {minimumNewPasswordLength} or more
+              characters.
+            </li>
+            <li>
+              <strong>Random.</strong> Use a generated mix of letters, numbers,
+              and symbols, or a passphrase of 4 to 7 unrelated words.
+            </li>
+            <li>
+              <strong>Unique.</strong> Use a different password for each account.
+            </li>
+          </ul>
+        </details>
+      )}
     </div>
   );
 }

@@ -67,7 +67,6 @@ export function PasswordRecovery({ reset = false }: { reset?: boolean }) {
                   name="confirmPassword"
                   newPassword
                 />
-                <p className="auth-help">Use at least 15 characters.</p>
               </>
             ) : (
               <>

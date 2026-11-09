@@ -1664,6 +1664,18 @@ dialog::backdrop {
   color: var(--muted);
   font-size: 13px;
 }
+.password-guide summary {
+  width: fit-content;
+  color: var(--forest);
+  cursor: pointer;
+}
+.password-guide ul {
+  margin: 8px 0 0;
+  padding-inline-start: 18px;
+}
+.password-guide li + li {
+  margin-top: 4px;
+}
 .profile-links {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
