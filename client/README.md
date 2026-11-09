@@ -1,6 +1,6 @@
 # Black Clover frontend
 
-Run `npm ci` and `npm run dev` from the `client` directory, then open
+Run `npm i` and `npm run dev` from the `client` directory, then open
 `http://localhost:5173`. Start the backend separately on port 3000.
 
 Vite forwards `/api` requests to the backend during development. The default
