@@ -215,3 +215,9 @@ The backend test command builds the API and runs the Paystack regression suite w
 | Admin access is denied | Confirm the signed-in account has the `ADMIN` role in the database. |
 | Password reset email does not arrive | Verify `RESEND_API_KEY`, `AUTH_EMAIL_FROM`, and that your Resend account can send to the recipient. |
 | Payment stays pending | Check the reservation’s payment status, the server’s Paystack verification response, and webhook delivery. |
+
+
+## Admin Logins:
+Email: Admin@gmail.com
+Passowrd: Admin23@gmail.com
+
