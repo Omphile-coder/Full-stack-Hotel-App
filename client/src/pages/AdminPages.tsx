@@ -14,11 +14,13 @@ import {
   Heading,
   Pagination,
 } from "../components/shared/Shared";
+import { useSession } from "../hooks/useSession";
 import { api } from "../lib/api";
 import { dateLabel, money } from "../lib/format";
 
 /** Dashboard metrics come from server aggregates and link into the management tasks. */
 export function Dashboard() {
+  const { user } = useSession();
   const summary = api.useAdminSummaryQuery(undefined, { refetchOnFocus: true });
   const data = summary.data;
   return (
@@ -27,7 +29,7 @@ export function Dashboard() {
         eyebrow="ADMIN WORKSPACE"
         subtitle="An overview of your properties, rooms, and guest reservations."
       >
-        Good day, team.
+        {user?.name ? `Good day, ${user.name}.` : "Good day."}
       </Heading>
       <Feedback
         loading={summary.isLoading}
