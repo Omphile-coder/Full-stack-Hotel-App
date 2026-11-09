@@ -5,9 +5,9 @@ export function GuestFooter() {
   return (
     <footer className="footer">
       <Link className="wordmark" to="/">
-        HALDEN
+        Black Clover
       </Link>
-      <p>© {new Date().getFullYear()} Halden Hotels</p>
+      <p>© {new Date().getFullYear()} Black Clover Hotels</p>
       <Link to="/hotels">Explore our locations</Link>
     </footer>
   );
