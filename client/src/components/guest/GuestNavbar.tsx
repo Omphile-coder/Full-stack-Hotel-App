@@ -76,7 +76,12 @@ export function GuestNavbar({
               </NavLink>
             </>
           ) : (
-            <>
+              <>
+                <NavLink to="/" end>
+                <House className="nav-icon" aria-hidden="true" />
+                Home
+                </NavLink>
+                
               <NavLink to="/hotels">
                 <Building2 className="nav-icon" aria-hidden="true" />
                 Our locations
