@@ -4,6 +4,7 @@ import {
   Building2,
   CalendarDays,
   Heart,
+  House,
   LayoutDashboard,
   LogIn,
   LogOut,
@@ -17,7 +18,7 @@ import { useSession } from "../../hooks/useSession";
 import { useSignOut } from "../../hooks/useSignOut";
 import { Feedback } from "../shared/Shared";
 
-/** Guest navigation exposes each account task directly, as in the reference projects. */
+/** Show navigation for the current account role on desktop and mobile. */
 export function GuestNavbar({
   hero = false,
 }: {
@@ -63,44 +64,53 @@ export function GuestNavbar({
           aria-label="Main navigation"
           onClick={() => setOpen(false)}
         >
-          <NavLink to="/hotels">
-            <Building2 className="nav-icon" aria-hidden="true" />
-            Our locations
-          </NavLink>
-          <NavLink to="/bookings">
-            <CalendarDays className="nav-icon" aria-hidden="true" />
-            My bookings
-          </NavLink>
-          <NavLink to="/favourites">
-            <Heart className="nav-icon" aria-hidden="true" />
-            Favourites
-          </NavLink>
-          <NavLink to="/notifications">
-            <Bell className="nav-icon" aria-hidden="true" />
-            Notifications
-          </NavLink>
-          <NavLink
-            to={user ? "/profile" : "/signin"}
-            className={user ? undefined : "nav-session-action"}
-          >
-            {user ? (
-              <UserRound className="nav-icon" aria-hidden="true" />
-            ) : (
-              <LogIn className="nav-icon" aria-hidden="true" />
-            )}
-            {user ? "My profile" : "Sign in"}
-          </NavLink>
-          {user?.role === "ADMIN" && (
-            <NavLink to="/admin">
-              <LayoutDashboard className="nav-icon" aria-hidden="true" />
-              Admin dashboard
-            </NavLink>
-          )}
-          {user && (
-            <button className="nav-session-action" disabled={isLoading} onClick={signOut}>
-              <LogOut className="nav-icon" aria-hidden="true" />
-              Sign out
-            </button>
+          {user?.role === "ADMIN" ? (
+            <>
+              <NavLink to="/" end>
+                <House className="nav-icon" aria-hidden="true" />
+                Home
+              </NavLink>
+              <NavLink to="/admin">
+                <LayoutDashboard className="nav-icon" aria-hidden="true" />
+                Admin dashboard
+              </NavLink>
+            </>
+          ) : (
+            <>
+              <NavLink to="/hotels">
+                <Building2 className="nav-icon" aria-hidden="true" />
+                Our locations
+              </NavLink>
+              <NavLink to="/bookings">
+                <CalendarDays className="nav-icon" aria-hidden="true" />
+                My bookings
+              </NavLink>
+              <NavLink to="/favourites">
+                <Heart className="nav-icon" aria-hidden="true" />
+                Favourites
+              </NavLink>
+              <NavLink to="/notifications">
+                <Bell className="nav-icon" aria-hidden="true" />
+                Notifications
+              </NavLink>
+              <NavLink
+                to={user ? "/profile" : "/signin"}
+                className={user ? undefined : "nav-session-action"}
+              >
+                {user ? (
+                  <UserRound className="nav-icon" aria-hidden="true" />
+                ) : (
+                  <LogIn className="nav-icon" aria-hidden="true" />
+                )}
+                {user ? "My profile" : "Sign in"}
+              </NavLink>
+              {user && (
+                <button className="nav-session-action" disabled={isLoading} onClick={signOut}>
+                  <LogOut className="nav-icon" aria-hidden="true" />
+                  Sign out
+                </button>
+              )}
+            </>
           )}
         </nav>
       </header>

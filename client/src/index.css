@@ -1362,7 +1362,7 @@ dialog::backdrop {
     border-color: var(--forest);
     color: var(--forest);
   }
-  .footer {
+  .footer:has(+ .bottom-navigation) {
     margin-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
   }
   .search-primary {
