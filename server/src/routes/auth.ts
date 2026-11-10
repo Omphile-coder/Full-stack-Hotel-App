@@ -1,8 +1,29 @@
-import { Router, type ErrorRequestHandler } from "express";
+import {
+  Router,
+  type ErrorRequestHandler,
+  type Request,
+  type Response,
+} from "express";
 import passport from "../config/passport.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
 
 const authRouter = Router();
+
+const clientOrigin = new URL(
+  process.env.CLIENT_URL ?? "http://localhost:5173",
+).origin;
+
+type GoogleFailure =
+  | "google"
+  | "google-cancelled"
+  | "google-session"
+  | "google-email-in-use";
+
+/** Return to the sign-in screen even if the browser lost its OAuth session. */
+function redirectGoogleFailure(req: Request, res: Response, reason: GoogleFailure) {
+  delete req.session.frontendReturnTo;
+  res.redirect(clientOrigin + "/signin?error=" + reason);
+}
 
 authRouter.get(
   "/google",
@@ -27,35 +48,54 @@ authRouter.get(
   }),
 );
 
-authRouter.get(
-  "/google/callback",
-  passport.authenticate("google", {
-    failureRedirect: "/api/v1/auth/failure",
-    keepSessionInfo: true,
-  }),
-  (req, res) => {
-    const returnTo = req.session.frontendReturnTo;
-    delete req.session.frontendReturnTo;
-    if (returnTo) {
-      const client = new URL(process.env.CLIENT_URL ?? "http://localhost:5173");
-      res.redirect(client.origin + returnTo);
-      return;
-    }
-    res.redirect("/api/v1/auth/me");
-  },
-);
-
-authRouter.get("/failure", (req, res) => {
-  if (req.session.frontendReturnTo) {
-    delete req.session.frontendReturnTo;
-    const client = new URL(process.env.CLIENT_URL ?? "http://localhost:5173");
-    res.redirect(client.origin + "/signin?error=google");
+authRouter.get("/google/callback", (req, res, next) => {
+  if (req.query.error === "access_denied") {
+    redirectGoogleFailure(req, res, "google-cancelled");
     return;
   }
-  res.status(401).json({
-    success: false,
-    message: "Google sign-in was unsuccessful",
-  });
+  if (!req.query.code && !req.query.error) {
+    redirectGoogleFailure(req, res, "google-session");
+    return;
+  }
+
+  passport.authenticate("google", (error: unknown, user?: Express.User | false | null, info?: unknown) => {
+    if (error) {
+      console.error("Google authentication request failed");
+      redirectGoogleFailure(req, res, "google");
+      return;
+    }
+    if (!user) {
+      let reason: GoogleFailure = "google";
+      if (info && typeof info === "object") {
+        if ("code" in info && info.code === "email-in-use") {
+          reason = "google-email-in-use";
+        } else if (
+          "message" in info &&
+          typeof info.message === "string" &&
+          info.message.includes("authorization request state")
+        ) {
+          reason = "google-session";
+        }
+      }
+      redirectGoogleFailure(req, res, reason);
+      return;
+    }
+
+    // Passport regenerates the session on login, so read the return path first.
+    const returnTo = req.session.frontendReturnTo;
+    req.logIn(user, (loginError) => {
+      if (loginError) {
+        console.error("Google sign-in session could not be saved");
+        redirectGoogleFailure(req, res, "google");
+        return;
+      }
+      res.redirect(returnTo ? clientOrigin + returnTo : "/api/v1/auth/me");
+    });
+  })(req, res, next);
+});
+
+authRouter.get("/failure", (req, res) => {
+  redirectGoogleFailure(req, res, "google");
 });
 
 authRouter.get("/me", requireAuth, (req, res) => {

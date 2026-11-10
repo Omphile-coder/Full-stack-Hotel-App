@@ -54,6 +54,7 @@ passport.use(
         if (emailOwner) {
           return done(null, false, {
             message: "This email already belongs to another account",
+            code: "email-in-use",
           });
         }
 

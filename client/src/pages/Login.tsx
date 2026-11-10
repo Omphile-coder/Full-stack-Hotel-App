@@ -115,6 +115,15 @@ export function Login() {
   const { pathname } = useLocation();
   const [params] = useSearchParams();
   const signup = pathname === "/register";
+  const googleError = params.get("error");
+  let googleErrorMessage = "Google sign-in could not be completed. Please try again.";
+  if (googleError === "google-session") {
+    googleErrorMessage = "Your Google sign-in session expired or was lost. Select Continue with Google again in this tab.";
+  } else if (googleError === "google-cancelled") {
+    googleErrorMessage = "Google sign-in was cancelled. You can try again.";
+  } else if (googleError === "google-email-in-use") {
+    googleErrorMessage = "This email already has an account. Sign in with your original method or use Forgot password if you registered with email and password.";
+  }
   const session = useSession();
   const next = safeReturnPath(params.get("next"));
   const query = next ? "?next=" + encodeURIComponent(next) : "";
@@ -142,9 +151,9 @@ export function Login() {
             Sign up
           </NavLink>
         </nav>
-        {params.get("error") && (
+        {googleError && (
           <p className="notice error" role="alert">
-            Google sign-in could not be completed. Please try again.
+            {googleErrorMessage}
           </p>
         )}
         {params.get("reset") === "1" && (
