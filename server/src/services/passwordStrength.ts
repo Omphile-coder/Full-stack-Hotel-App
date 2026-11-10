@@ -38,5 +38,13 @@ export function isStrongPassword(password: string, name: string, email: string) 
 
   // Spaces alone should not turn a predictable phrase into a strong password.
   const candidate = isPassphrase ? words.join("") : password;
-  return strength.check(candidate, userInputs).score === 4;
+  const result = strength.check(candidate, userInputs);
+  if (result.score === 4) return true;
+
+  // A generated short password can score below 4 even without a guessable pattern.
+  return (
+    hasMixedCharacters &&
+    password.length < 16 &&
+    result.sequence.every((match) => match.pattern === "bruteforce")
+  );
 }

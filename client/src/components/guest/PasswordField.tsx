@@ -1,7 +1,7 @@
 import { Eye, EyeOff } from "lucide-react";
 import { useId, useState } from "react";
 
-const minimumNewPasswordLength = 16;
+const minimumNewPasswordLength = 8;
 
 /** Give each password field an independent visibility toggle and a native label. */
 export function PasswordField({

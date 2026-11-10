@@ -15,7 +15,7 @@ const sessionUser = {
   passwordVersion: true,
 } as const;
 const resetLifetimeMs = 30 * 60 * 1000;
-const minimumNewPasswordLength = 16;
+const minimumNewPasswordLength = 8;
 
 /** Use the same normalized email format as Google account registration. */
 function emailAddress(value: unknown) {
