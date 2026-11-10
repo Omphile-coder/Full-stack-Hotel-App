@@ -144,7 +144,7 @@ passwordAuth.post("/register", limitAttempts(8), async (req, res) => {
   if (!isStrongPassword(password, name, email)) {
     throw new ApiError(
       422,
-      "Choose a stronger password. Use a random mix of uppercase and lowercase letters, numbers, and symbols, or 4 to 7 different, unrelated words.",
+      "Use an uppercase letter, a lowercase letter, a number, and a symbol, or choose a passphrase of 4 to 7 unrelated words.",
     );
   }
   const duplicate = new ApiError(

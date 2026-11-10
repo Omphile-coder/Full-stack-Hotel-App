@@ -8,8 +8,15 @@ const strength = new ZxcvbnFactory({
   maxLength: 128,
 });
 
-/** Accept both generated passwords and passphrases, and reject guessable patterns. */
+/** Accept mixed-character passwords and check passphrases for guessable patterns. */
 export function isStrongPassword(password: string, name: string, email: string) {
+  const hasMixedCharacters =
+    /\p{Lu}/u.test(password) &&
+    /\p{Ll}/u.test(password) &&
+    /\p{Nd}/u.test(password) &&
+    /[\p{P}\p{S}]/u.test(password);
+  if (hasMixedCharacters) return true;
+
   const words = password
     .replace(/(\p{Ll})(\p{Lu})/gu, "$1 $2")
     .trim()
@@ -19,13 +26,7 @@ export function isStrongPassword(password: string, name: string, email: string) 
     words.length <= 7 &&
     words.every((word) => /^\p{L}[\p{L}\p{M}]*$/u.test(word)) &&
     new Set(words.map((word) => word.toLowerCase())).size === words.length;
-  const hasMixedCharacters =
-    /\p{Lu}/u.test(password) &&
-    /\p{Ll}/u.test(password) &&
-    /\p{Nd}/u.test(password) &&
-    /[\p{P}\p{S}]/u.test(password);
-
-  if (!isPassphrase && !hasMixedCharacters) return false;
+  if (!isPassphrase) return false;
 
   const nameParts = name.toLowerCase().split(/\s+/u);
   const userInputs = [
@@ -37,14 +38,5 @@ export function isStrongPassword(password: string, name: string, email: string) 
   ].filter((part) => part.length >= 4);
 
   // Spaces alone should not turn a predictable phrase into a strong password.
-  const candidate = isPassphrase ? words.join("") : password;
-  const result = strength.check(candidate, userInputs);
-  if (result.score === 4) return true;
-
-  // A generated short password can score below 4 even without a guessable pattern.
-  return (
-    hasMixedCharacters &&
-    password.length < 16 &&
-    result.sequence.every((match) => match.pattern === "bruteforce")
-  );
+  return strength.check(words.join(""), userInputs).score === 4;
 }

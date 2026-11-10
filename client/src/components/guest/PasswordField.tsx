@@ -70,8 +70,9 @@ export function PasswordField({
               characters.
             </li>
             <li>
-              <strong>Random.</strong> Use a generated mix of letters, numbers,
-              and symbols, or a passphrase of 4 to 7 unrelated words.
+              <strong>Mix characters.</strong> Include an uppercase letter, a
+              lowercase letter, a number, and a symbol. You can also use a
+              passphrase of 4 to 7 unrelated words.
             </li>
             <li>
               <strong>Unique.</strong> Use a different password for each account.
